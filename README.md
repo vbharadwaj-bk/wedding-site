@@ -1,29 +1,35 @@
-# Wedding Site Rebuild Guide
+# Aditi and Vivek's Wedding Website 
 
-This repo uses a prebuild step to generate static assets before running Pelican.
+All text content and configuration options are in `content/config.yml`.
 
 ## Prerequisites
 
-1. Put high-resolution slideshow photos in highres_slides.
-2. Put your font file in fonts.
-3. Set the font file name in content/config.yml under logo.font_name.
-4. Install dependencies in your current Python environment:
+1. Put high-resolution slideshow photos in highres_slides. The photo names must
+   match those specified in `config.yml`.
+2. Put your font file in fonts. The font name is specified in `config.yml`.
+3. Install dependencies in your current Python environment:
 
+   ```bash
    python3 -m pip install -r requirements.txt
+   ```
 
 ## Rebuild Steps
 
 1. Run the prebuild script:
 
+   ```bash
    python3 scripts/prebuild.py
+   ```
 
-2. The prebuild step does two things:
+   The prebuild step does two things:
    - Renders content/images/logo/names-lockup.svg from config and the selected font.
    - Minifies highres_slides images into content/images/slides using logo.jpeg_quality.
 
-3. Build the site as usual (example):
+2. Build the site: 
 
-   pelican content -s pelicanconf.py
+   ```bash
+   python -m invoke livereload 
+   ```
 
 ## Useful Options
 
@@ -38,13 +44,3 @@ This repo uses a prebuild step to generate static assets before running Pelican.
 - Run only slide minification:
 
   python3 scripts/prebuild.py --skip-logo
-
-## Git Ignore Notes
-
-Font files are ignored by .gitignore for both:
-- fonts
-- theme/my-wedding-theme/static/fonts
-
-If a font was already staged or tracked before the ignore rules, untrack it once:
-
-git rm --cached -r fonts theme/my-wedding-theme/static/fonts
