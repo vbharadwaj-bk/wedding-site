@@ -1,6 +1,4 @@
-pelican[markdown]==4.9.1
+pelican==4.9.1
 Markdown==3.6
 invoke>=2.2.0
 livereload>=2.7.0
-svgwrite>=1.4.3
-Pillow>=10.4.0

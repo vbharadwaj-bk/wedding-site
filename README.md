@@ -7,10 +7,16 @@ All text content and configuration options are in `content/config.yml`.
 1. Put high-resolution slideshow photos in highres_slides. The photo names must
    match those specified in `config.yml`.
 2. Put your font file in fonts. The font name is specified in `config.yml`.
-3. Install dependencies in your current Python environment:
+3. Install runtime dependencies (used for Pelican build/serve):
 
    ```bash
    python3 -m pip install -r requirements.txt
+   ```
+
+4. Install prebuild-only dependencies locally:
+
+   ```bash
+   python3 -m pip install -r requirements-prebuild.txt
    ```
 
 ## Rebuild Steps
@@ -30,6 +36,12 @@ All text content and configuration options are in `content/config.yml`.
    ```bash
    python -m invoke livereload 
    ```
+
+## CI / GitHub Actions
+
+GitHub Actions does not run prebuild and only installs dependencies from
+`requirements.txt`. Commit prebuilt assets (logo lockup SVG and minified slides)
+before pushing so CI can build with Pelican only.
 
 ## Useful Options
 
