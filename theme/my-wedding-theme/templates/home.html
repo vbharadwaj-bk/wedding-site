@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page.title }}{% endblock title %}
+
+{% block body_class %}home-page{% endblock body_class %}
+
+{% block content %}
+{% set base_slides = page.slideshow_images.split(',') if page.slideshow_images else [] %}
+{% set pane_ids = ['pane-intro', 'pane-story', 'pane-families', 'pane-schedule-1', 'pane-schedule-2', 'pane-links'] %}
+{% set pane_slide_config = PANE_SLIDES if PANE_SLIDES is mapping else {} %}
+{% set available_photos = AVAILABLE_PHOTOS if AVAILABLE_PHOTOS else [] %}
+
+{% set normalized_base_slides = [] %}
+{% for image in base_slides %}
+{% set clean_image = image.strip() %}
+{% if clean_image %}
+{% if '/' in clean_image %}
+{% set full_path = clean_image %}
+{% else %}
+{% set full_path = 'images/slides/' ~ clean_image %}
+{% endif %}
+{% if full_path in available_photos %}
+{% if full_path not in normalized_base_slides %}
+{% set _ = normalized_base_slides.append(full_path) %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% set fallback_slides = normalized_base_slides[:4] %}
+
+{% set pane_slide_map = {} %}
+{% for pane_id in pane_ids %}
+{% set pane_list = pane_slide_config.get(pane_id, []) %}
+{% if pane_list is string %}
+{% set pane_list = [pane_list] %}
+{% endif %}
+{% set normalized_pane_list = [] %}
+{% for image in pane_list %}
+{% set clean_image = image|string|trim %}
+{% if clean_image %}
+{% if '/' in clean_image %}
+{% set full_path = clean_image %}
+{% else %}
+{% set full_path = 'images/slides/' ~ clean_image %}
+{% endif %}
+{% if full_path in available_photos %}
+{% if full_path not in normalized_pane_list %}
+{% set _ = normalized_pane_list.append(full_path) %}
+{% endif %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% set capped_list = normalized_pane_list[:4] %}
+{% set mapped_slots = [] %}
+{% for i in range(4) %}
+{% set fallback_slot = fallback_slides[i] if i < fallback_slides|length else '' %}
+{% set override_slot = capped_list[i] if i < capped_list|length else '' %}
+{% set final_slot = override_slot if override_slot else fallback_slot %}
+{% if final_slot %}
+{% set _ = mapped_slots.append(final_slot) %}
+{% endif %}
+{% endfor %}
+{% if not mapped_slots %}
+{% set mapped_slots = fallback_slides %}
+{% endif %}
+{% set _ = pane_slide_map.update({pane_id: mapped_slots}) %}
+{% endfor %}
+
+{% set all_slides = [] %}
+{% for pane_id in pane_ids %}
+{% for image_path in pane_slide_map.get(pane_id, []) %}
+{% if image_path not in all_slides %}
+{% set _ = all_slides.append(image_path) %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+{% if not all_slides %}
+{% set all_slides = normalized_base_slides %}
+{% endif %}
+
+{% set schedule_days = WEDDING_SCHEDULE.get('days', []) %}
+{% set bangalore_days = schedule_days[:2] %}
+{% set kolkata_days = schedule_days[2:] %}
+{% set first_schedule_pane = 'pane-schedule-1' if bangalore_days else ('pane-schedule-2' if kolkata_days else 'pane-links') %}
+<section class="home-split" data-slideshow>
+  <div class="split-left" aria-label="Wedding slideshow">
+    <div class="slideshow slideshow-pane">
+      {% for image_path in all_slides %}
+      {% set image_name = image_path.split('/')[-1] %}
+      {% set crop = SLIDESHOW_CROPS.get(image_name, {'x': 0, 'y': 0, 'w': 100, 'h': 100}) %}
+      {% set crop_w = crop.get('w', 100) %}
+      {% if crop_w <= 0 %}{% set crop_w = 100 %}{% endif %}
+      {% set crop_h = crop.get('h', 100) %}
+      {% if crop_h <= 0 %}{% set crop_h = 100 %}{% endif %}
+      {% set crop_x = crop.get('x', 0) + (crop_w / 2) %}
+      {% set crop_y = crop.get('y', 0) + (crop_h / 2) %}
+      <img class="slide{% if loop.first %} is-active{% endif %}" src="{{ SITEURL }}/{{ image_path }}" data-slide-path="{{ image_path }}" alt="Wedding highlight {{ loop.index }}" loading="eager" style="--crop-x: {{ crop_x }}%; --crop-y: {{ crop_y }}%;" aria-hidden="{% if loop.first %}false{% else %}true{% endif %}" />
+      {% endfor %}
+
+      {% if fallback_slides|length > 0 %}
+      <div class="slide-dots pane-dots" role="tablist" aria-label="Slideshow pagination">
+        {% for i in range(fallback_slides|length) %}
+        <button class="dot{% if loop.first %} is-active{% endif %}" data-slot="{{ i }}" aria-label="Go to image {{ i + 1 }}"></button>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    <div class="mobile-hero-overlay" aria-hidden="true">
+      <img class="couple-lockup mobile-couple-lockup" src="{{ SITEURL }}/images/logo/names-lockup.svg" alt="{{ CONTENT_CONFIG.get('bride_name', 'Aditi Lahiri') }} and {{ CONTENT_CONFIG.get('groom_name', 'Vivek Bharadwaj') }}" loading="eager" />
+      <div class="pane-meta-split mobile-meta-split" aria-label="Wedding cities and dates">
+        <div class="meta-block">
+          <span class="meta-city">{{ CONTENT_CONFIG.get('intro_left_city', 'Bangalore') }}</span>
+          <span class="meta-dates">{{ CONTENT_CONFIG.get('intro_left_dates', 'Nov. 21-22') }}</span>
+        </div>
+        <span class="meta-divider" aria-hidden="true">|</span>
+        <div class="meta-block">
+          <span class="meta-city">{{ CONTENT_CONFIG.get('intro_right_city', 'Kolkata') }}</span>
+          <span class="meta-dates">{{ CONTENT_CONFIG.get('intro_right_dates', 'Nov. 25-27') }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="split-right" id="details" aria-label="Wedding details">
+    <section class="pane pane-intro" id="pane-intro" data-pane-slides="{{ pane_slide_map.get('pane-intro', fallback_slides)|join(',') }}">
+      <div class="pane-inner">
+        <img class="couple-lockup" src="{{ SITEURL }}/images/logo/names-lockup.svg" alt="{{ CONTENT_CONFIG.get('bride_name', 'Aditi Lahiri') }} and {{ CONTENT_CONFIG.get('groom_name', 'Vivek Bharadwaj') }}" loading="eager" />
+        <div class="pane-meta-split" aria-label="Wedding cities and dates">
+          <div class="meta-block">
+            <span class="meta-city">{{ CONTENT_CONFIG.get('intro_left_city', 'Bangalore') }}</span>
+            <span class="meta-dates">{{ CONTENT_CONFIG.get('intro_left_dates', 'Nov. 21-22') }}</span>
+          </div>
+          <span class="meta-divider" aria-hidden="true">|</span>
+          <div class="meta-block">
+            <span class="meta-city">{{ CONTENT_CONFIG.get('intro_right_city', 'Kolkata') }}</span>
+            <span class="meta-dates">{{ CONTENT_CONFIG.get('intro_right_dates', 'Nov. 25-27') }}</span>
+          </div>
+        </div>
+        <button class="pane-scroll-btn" data-next-pane="pane-story" aria-label="Scroll to next section">
+          <i class="fa-solid fa-angle-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-story" data-pane-slides="{{ pane_slide_map.get('pane-story', fallback_slides)|join(',') }}">
+      <div class="pane-inner">
+        <p class="eyebrow pane-heading">our story</p>
+        <img class="pane-glyph" src="{{ SITEURL }}/images/glyphs/flower-1.png" alt="" aria-hidden="true" loading="lazy" />
+        <p>{{ CONTENT_CONFIG.get('our_story_text', page.our_story_text) }}</p>
+        <button class="pane-scroll-btn" data-next-pane="pane-families" aria-label="Scroll to next section">
+          <i class="fa-solid fa-angle-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+
+    <section class="pane" id="pane-families" data-pane-slides="{{ pane_slide_map.get('pane-families', fallback_slides)|join(',') }}">
+      <div class="pane-inner">
+        <p class="eyebrow pane-heading">{{ CONTENT_CONFIG.get('engagement_title', 'Our Engagement') }}</p>
+        <img class="pane-glyph" src="{{ SITEURL }}/images/glyphs/flower-4.png" alt="" aria-hidden="true" loading="lazy" />
+        <p>{{ CONTENT_CONFIG.get('engagement_text', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.') }}</p>
+        <button class="pane-scroll-btn" data-next-pane="{{ first_schedule_pane }}" aria-label="Scroll to next section">
+          <i class="fa-solid fa-angle-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+
+    {% if bangalore_days %}
+    <section class="pane pane-schedule" id="pane-schedule-1" data-pane-slides="{{ pane_slide_map.get('pane-schedule-1', fallback_slides)|join(',') }}">
+      <div class="pane-inner schedule-inner">
+        <p class="eyebrow schedule-heading pane-heading">Bangalore</p>
+        <img class="pane-glyph" src="{{ SITEURL }}/images/glyphs/flower-2.png" alt="" aria-hidden="true" loading="lazy" />
+        {% for day in bangalore_days %}
+        <div class="schedule-day-block">
+          <p class="schedule-day-title">{{ day.get('date', '')|replace(', 2026', '') }}</p>
+          <div class="schedule-list">
+            {% for event in day.get('events', []) %}
+            <article class="schedule-item">
+              <h3>{{ event.get('title', '') }}</h3>
+              {% set has_time = event.get('time') %}
+              {% set has_location = event.get('venue') %}
+              {% if has_time and has_location %}
+              <p class="schedule-meta-inline"><span class="schedule-meta-time">{{ event.get('time') }}</span><span class="schedule-meta-divider" aria-hidden="true">,</span><span class="schedule-meta-location">{% if event.get('venue_map_url') %}<a href="{{ event.get('venue_map_url') }}" target="_blank" rel="noopener noreferrer">{{ event.get('venue') }}</a>{% else %}{{ event.get('venue') }}{% endif %}</span></p>
+              {% elif has_time %}
+              <p class="schedule-meta-time-only">{{ event.get('time') }}</p>
+              {% elif has_location %}
+              <p class="schedule-meta-location">
+                {% if event.get('venue_map_url') %}
+                <a href="{{ event.get('venue_map_url') }}" target="_blank" rel="noopener noreferrer">{{ event.get('venue') }}</a>
+                {% else %}
+                {{ event.get('venue') }}
+                {% endif %}
+              </p>
+              {% endif %}
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <button class="pane-scroll-btn" data-next-pane="pane-schedule-2" aria-label="Scroll to next section">
+          <i class="fa-solid fa-angle-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+    {% endif %}
+
+    {% if kolkata_days %}
+    <section class="pane pane-schedule" id="pane-schedule-2" data-pane-slides="{{ pane_slide_map.get('pane-schedule-2', fallback_slides)|join(',') }}">
+      <div class="pane-inner schedule-inner">
+        <p class="eyebrow schedule-heading pane-heading">Kolkata</p>
+        <img class="pane-glyph" src="{{ SITEURL }}/images/glyphs/flower-3.png" alt="" aria-hidden="true" loading="lazy" />
+        {% for day in kolkata_days %}
+        <div class="schedule-day-block">
+          <p class="schedule-day-title">{{ day.get('date', '')|replace(', 2026', '') }}</p>
+          <div class="schedule-list">
+            {% for event in day.get('events', []) %}
+            <article class="schedule-item">
+              <h3>{{ event.get('title', '') }}</h3>
+              {% set has_time = event.get('time') %}
+              {% set has_location = event.get('venue') %}
+              {% if has_time and has_location %}
+              <p class="schedule-meta-inline"><span class="schedule-meta-time">{{ event.get('time') }}</span><span class="schedule-meta-divider" aria-hidden="true">,</span><span class="schedule-meta-location">{% if event.get('venue_map_url') %}<a href="{{ event.get('venue_map_url') }}" target="_blank" rel="noopener noreferrer">{{ event.get('venue') }}</a>{% else %}{{ event.get('venue') }}{% endif %}</span></p>
+              {% elif has_time %}
+              <p class="schedule-meta-time-only">{{ event.get('time') }}</p>
+              {% elif has_location %}
+              <p class="schedule-meta-location">
+                {% if event.get('venue_map_url') %}
+                <a href="{{ event.get('venue_map_url') }}" target="_blank" rel="noopener noreferrer">{{ event.get('venue') }}</a>
+                {% else %}
+                {{ event.get('venue') }}
+                {% endif %}
+              </p>
+              {% endif %}
+            </article>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        <button class="pane-scroll-btn" data-next-pane="pane-links" aria-label="Scroll to next section">
+          <i class="fa-solid fa-angle-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+    {% endif %}
+
+    <section class="pane pane-links" id="pane-links" data-pane-slides="{{ pane_slide_map.get('pane-links', fallback_slides)|join(',') }}">
+      <div class="pane-inner">
+        <img class="pane-monogram" src="{{ SITEURL }}/images/logo/monogram.svg" alt="Monogram" loading="lazy" />
+        <button class="pane-scroll-btn" data-next-pane="pane-intro" aria-label="Back to top section">
+          <i class="fa-solid fa-angle-up" aria-hidden="true"></i>
+        </button>
+      </div>
+    </section>
+  </div>
+</section>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{{ SITEURL }}/theme/js/slideshow.js"></script>
+{% endblock scripts %}

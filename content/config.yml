@@ -1,0 +1,155 @@
+# Primary editable content config used by Pelican and logo renderer.
+
+# Pane: Intro
+bride_name: "Aditi Lahiri"
+groom_name: "Vivek Bharadwaj"
+intro_left_city: "Bangalore"
+intro_left_dates: "Nov. 21-22"
+intro_right_city: "Kolkata"
+intro_right_dates: "Nov. 25-27"
+
+# Pane: Slideshow images
+pane_slides:
+  pane-intro:
+    - garden_gate.jpg
+    - on_bench.jpg
+    - redwood_grove_center.jpg
+    - tree_walk.jpg
+
+  pane-story:
+    - hands_on_face.jpeg
+    - engagement_ask.jpeg
+    - after_proposal.JPG
+    - birds.jpeg
+
+  pane-families:
+    - with_family.jpeg
+    - engaged.jpeg
+    - malini_rice.jpeg
+    - shyamala_rice.jpeg
+
+  pane-schedule-1: []
+  pane-schedule-2: []
+  pane-links: []
+
+# Pane: Story
+our_story_text: >-
+  Downpours usually make for bad dates. But when we found each other during the 
+  rainiest California winter of our lifetimes, we discovered so many shared passions in Berkeley, 
+  that beating heart of the East Bay. We binged prestige TV; cooked from the Times's recipe catalogue; 
+  played Scrabble, Hanabi, and Furnace in board game cafes. When the skies cleared, we saw the sunset from 
+  the heights of Cragmont, watched the fog shroud the San Francisco skyline from Indian Rock, and listened 
+  to the placid waves lapping the marina shoreline. We feasted on Berkeley's culinary delights 
+  and drank in acres of botanical garden beauty. We write together. Our love runs deep after three years - and 
+  yet, we still find as much joy in these little activities as we did the first time we tried them together.
+
+# Pane: Families / Engagement
+engagement_title: "Our Engagement"
+engagement_text: >-
+  Our families gathered this year for a fun Indian engagement. In a traditional
+  ceremony, the families of the bride and groom exchange vows of commitment,
+  marking the start of the wedding festivities. Aditi and I exchanged rings,
+  drank kheer, and were showered with rice and gifts.
+
+# Site branding
+logo:
+  left_name: "Aditi Lahiri"
+  right_name: "Vivek Bharadwaj"
+  ampersand: "&"
+  font_name: "La Charlune-Regular.ttf"
+  font_scale: 1.5
+  background: "transparent"
+  foreground: "#24170f"
+  jpeg_quality: 40
+
+# Pane: Wedding schedule
+wedding_schedule:
+  title: Wedding Schedule
+  days:
+    - date: Saturday, November 21, 2026
+      events:
+        - title: Vratham and Engagement (Family)
+          time: 8:00 am
+          venue: The Peacock Grove
+          address: On Byalkere Road, Bengaluru, KA
+          venue_map_url: https://www.google.com/maps/search/?api=1&query=The+Peacock+Grove+On+Byalkere+Road+Bengaluru+KA+560090
+        - title: Reception
+          time: 5:30-8:30 pm
+          venue: The Peacock Grove
+          venue_map_url: https://www.google.com/maps/search/?api=1&query=The+Peacock+Grove+On+Byalkere+Road+Bengaluru+KA+560090
+
+    - date: Sunday, November 22, 2026
+      events:
+        - title: Muhurtham
+          time: 9:30 am - 10:15 am
+          venue: The Peacock Grove
+          address: On Byalkere Road, Bengaluru, KA
+          venue_map_url: https://www.google.com/maps/search/?api=1&query=The+Peacock+Grove+On+Byalkere+Road+Bengaluru+KA+560090
+        - title: Lunch to follow
+
+    - date: Wednesday, November 25, 2026
+      events:
+        - title: Musical Evening
+          time: 7:00 pm
+          venue: 24b, 2nd Avenue
+          address: 24b 2nd Avenue, Kolkata, WB
+          venue_map_url: https://www.google.com/maps/search/?api=1&query=24b+2nd+Avenue+Kolkata+WB+700064
+
+    - date: Thursday, November 26, 2026
+      events:
+        - title: Shubho Porinoy
+          time: 6:30 pm
+          venue: The Raajkutir
+          address: 89C Narkeldanga Main Road, Kolkata, WB
+          venue_map_url: https://www.google.com/maps/search/?api=1&query=Raajkutir+Kolkata+IHCL+SeleQtions+89C+Narkeldanga+Main+Road+Kolkata+WB+700054
+
+    - date: Friday, November 27, 2026
+      events:
+        - title: Kanya Bidaai (Farewell)
+          time: 6:00 pm
+          venue: The Raajkutir
+          address: 89C Narkeldanga Main Road, Kolkata, WB
+          venue_map_url: https://www.google.com/maps/search/?api=1&query=Raajkutir+Kolkata+IHCL+SeleQtions+89C+Narkeldanga+Main+Road+Kolkata+WB+700054
+
+# Pane: Slideshow crops
+slideshow_crops:
+  garden_gate.jpg:
+    x: 14
+    y: 12
+    w: 62
+    h: 86
+  on_bench.jpg:
+    x: 20
+    y: 20
+    w: 58
+    h: 64
+  redwood_grove_center.jpg:
+    x: 18
+    y: 50
+    w: 60
+    h: 84
+  tree_walk.jpg:
+    x: 22
+    y: 40
+    w: 56
+    h: 86
+  with_family.jpeg:
+    x: 20
+    y: 20
+    w: 58
+    h: 64
+  engaged.jpeg:
+    x: 20
+    y: 20
+    w: 58
+    h: 64
+  after_proposal.JPG:
+    x: 20
+    y: 20
+    w: 58
+    h: 64
+  engagement_ask.jpeg:
+    x: 20
+    y: 20
+    w: 58
+    h: 64

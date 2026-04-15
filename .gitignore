@@ -1,0 +1,17 @@
+# Build and cache
+output/
+__pycache__/
+.cache/
+cache/
+
+# Python environment and editor junk
+.venv/
+*.pyc
+.DS_Store
+
+# Keep original uncurated photos out of git
+highres_slides/
+
+# Keep font binaries out of git
+fonts/**
+!fonts/.gitkeep
