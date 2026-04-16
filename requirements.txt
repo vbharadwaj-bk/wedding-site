@@ -2,3 +2,4 @@ pelican==4.9.1
 Markdown==3.6
 invoke>=2.2.0
 livereload>=2.7.0
+PyYAML>=6.0.1

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import yaml
+
 
 def _load_content_config(config_path: Path) -> dict:
     if not config_path.exists():
@@ -9,21 +11,8 @@ def _load_content_config(config_path: Path) -> dict:
 
     raw_text = config_path.read_text(encoding="utf-8")
 
-    try:
-        import yaml  # type: ignore
-
-        parsed = yaml.safe_load(raw_text) or {}
-        return parsed if isinstance(parsed, dict) else {}
-    except ModuleNotFoundError:
-        # Minimal fallback parser for flat "key: value" files when PyYAML is unavailable.
-        data: dict[str, str] = {}
-        for line in raw_text.splitlines():
-            cleaned = line.strip()
-            if not cleaned or cleaned.startswith("#") or ":" not in cleaned:
-                continue
-            key, value = cleaned.split(":", 1)
-            data[key.strip()] = value.strip().strip('"').strip("'")
-        return data
+    parsed = yaml.safe_load(raw_text) or {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def _load_available_photo_paths(content_root: Path) -> set[str]:

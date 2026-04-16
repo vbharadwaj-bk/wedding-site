@@ -6,6 +6,8 @@ from pathlib import Path
 from typing import Any
 
 import svgwrite
+import yaml
+from PIL import Image, ImageOps
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
@@ -14,41 +16,8 @@ def _load_yaml(path: Path) -> dict[str, Any]:
 
     raw = path.read_text(encoding="utf-8")
 
-    try:
-        import yaml  # type: ignore
-
-        data = yaml.safe_load(raw) or {}
-        return data if isinstance(data, dict) else {}
-    except ModuleNotFoundError:
-        data: dict[str, Any] = {}
-        current_section: str | None = None
-
-        for line in raw.splitlines():
-            if not line.strip() or line.lstrip().startswith("#"):
-                continue
-
-            indent = len(line) - len(line.lstrip(" "))
-            cleaned = line.strip()
-
-            if indent == 0 and cleaned.endswith(":"):
-                current_section = cleaned[:-1].strip()
-                data[current_section] = {}
-                continue
-
-            if ":" not in cleaned:
-                continue
-
-            key, value = cleaned.split(":", 1)
-            parsed_key = key.strip()
-            parsed_value = value.strip().strip('"').strip("'")
-
-            if indent >= 2 and current_section and isinstance(data.get(current_section), dict):
-                data[current_section][parsed_key] = parsed_value
-            elif indent == 0:
-                data[parsed_key] = parsed_value
-                current_section = None
-
-        return data
+    data = yaml.safe_load(raw) or {}
+    return data if isinstance(data, dict) else {}
 
 
 def _extract_logo_config(cfg: dict[str, Any]) -> dict[str, Any]:
@@ -207,13 +176,6 @@ def _iter_images(source_dir: Path) -> list[Path]:
 
 
 def _save_optimized(src: Path, dst: Path, jpeg_quality: int) -> None:
-    try:
-        from PIL import Image, ImageOps
-    except ModuleNotFoundError as exc:
-        raise RuntimeError(
-            "Pillow is required for image minification. Install from requirements.txt."
-        ) from exc
-
     with Image.open(src) as img:
         normalized = ImageOps.exif_transpose(img)
         suffix = src.suffix.lower()
