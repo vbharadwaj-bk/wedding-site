@@ -306,6 +306,10 @@ h3 {
   opacity: 0.95;
 }
 
+.mini-engagement-slideshow {
+  display: none;
+}
+
 .pane-schedule .pane-inner {
   align-content: center;
   gap: 0.7rem;
@@ -800,6 +804,7 @@ h3 {
     padding: 12vh 1rem 8vh;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 32%, rgba(0, 0, 0, 0.42) 100%);
     z-index: 4;
+    pointer-events: none;
   }
 
   @supports (padding: max(0px)) {
@@ -872,6 +877,54 @@ h3 {
   .pane:not(.pane-schedule) li {
     font-size: 0.9rem;
     line-height: 1.62;
+  }
+
+  .mini-engagement-slideshow {
+    position: relative;
+    display: block;
+    width: min(94%, 348px);
+    height: 190px;
+    margin: 0.25rem auto 0;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 28px rgba(56, 36, 24, 0.18);
+  }
+
+  .mini-slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 420ms ease;
+  }
+
+  .mini-slide.is-active {
+    opacity: 1;
+  }
+
+  .mini-slide-dots {
+    position: absolute;
+    left: 50%;
+    bottom: 0.6rem;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.38rem;
+    z-index: 3;
+  }
+
+  .mini-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    border: 0;
+    background: rgba(255, 255, 255, 0.56);
+  }
+
+  .mini-dot.is-active {
+    background: rgba(255, 255, 255, 0.96);
   }
 
   .split-story {

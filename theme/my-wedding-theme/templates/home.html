@@ -159,6 +159,21 @@
         <p class="eyebrow pane-heading">{{ CONTENT_CONFIG.get('engagement_title', 'Our Engagement') }}</p>
         <img class="pane-glyph" src="{{ SITEURL }}/images/glyphs/flower-4.png" alt="" aria-hidden="true" loading="lazy" />
         <p>{{ CONTENT_CONFIG.get('engagement_text', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.') }}</p>
+        {% set engagement_slides = pane_slide_map.get('pane-families', fallback_slides) %}
+        {% if engagement_slides %}
+        <div class="mini-engagement-slideshow" data-mini-slideshow aria-label="Engagement photos">
+          {% for image_path in engagement_slides %}
+          <img class="mini-slide{% if loop.first %} is-active{% endif %}" src="{{ SITEURL }}/{{ image_path }}" alt="Engagement photo {{ loop.index }}" loading="lazy" aria-hidden="{% if loop.first %}false{% else %}true{% endif %}" />
+          {% endfor %}
+          {% if engagement_slides|length > 1 %}
+          <div class="mini-slide-dots" role="tablist" aria-label="Engagement photo pagination">
+            {% for _ in engagement_slides %}
+            <button class="mini-dot{% if loop.first %} is-active{% endif %}" data-mini-slot="{{ loop.index0 }}" aria-label="Show engagement photo {{ loop.index }}"></button>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
         <button class="pane-scroll-btn" data-next-pane="{{ first_schedule_pane }}" aria-label="Scroll to next section">
           <i class="fa-solid fa-angle-down" aria-hidden="true"></i>
         </button>

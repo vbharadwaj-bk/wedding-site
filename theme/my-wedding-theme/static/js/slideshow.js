@@ -4,6 +4,50 @@
     return;
   }
 
+  const mobileMedia = window.matchMedia("(max-width: 900px)");
+  const isMobile = () => mobileMedia.matches;
+  const SWIPE_MIN_PX = 28;
+
+  const addSwipeNavigation = (element, onDirection) => {
+    let startX = 0;
+    let startY = 0;
+
+    element.addEventListener(
+      "touchstart",
+      (event) => {
+        if (!isMobile() || !event.touches.length) {
+          return;
+        }
+
+        startX = event.touches[0].clientX;
+        startY = event.touches[0].clientY;
+      },
+      { passive: true }
+    );
+
+    element.addEventListener(
+      "touchend",
+      (event) => {
+        if (!isMobile() || !event.changedTouches.length) {
+          return;
+        }
+
+        const endX = event.changedTouches[0].clientX;
+        const endY = event.changedTouches[0].clientY;
+        const dx = endX - startX;
+        const dy = endY - startY;
+
+        if (Math.abs(dx) < SWIPE_MIN_PX || Math.abs(dx) <= Math.abs(dy)) {
+          return;
+        }
+
+        const direction = dx < 0 ? 1 : -1;
+        onDirection(direction);
+      },
+      { passive: true }
+    );
+  };
+
   const detailsPane = root.querySelector(".split-right");
   const mainScroller = document.querySelector(".home-page main");
   const paneButtons = Array.from(root.querySelectorAll(".pane-scroll-btn"));
@@ -343,6 +387,42 @@
     });
   });
 
+  const mainSlideshowPane = root.querySelector(".slideshow-pane");
+  if (mainSlideshowPane) {
+    let suppressTapUntil = 0;
+
+    addSwipeNavigation(mainSlideshowPane, (direction) => {
+      runSlideTransition({ direction });
+      restartTimer();
+      suppressTapUntil = Date.now() + 360;
+    });
+
+    mainSlideshowPane.addEventListener("click", (event) => {
+      if (!isMobile()) {
+        return;
+      }
+
+      if (Date.now() < suppressTapUntil) {
+        return;
+      }
+
+      const target = event.target;
+      if (!(target instanceof Element)) {
+        return;
+      }
+
+      if (target.closest(".slide-dots") || target.closest(".dot")) {
+        return;
+      }
+
+      const rect = mainSlideshowPane.getBoundingClientRect();
+      const relativeX = event.clientX - rect.left;
+      const direction = relativeX < rect.width / 2 ? -1 : 1;
+      runSlideTransition({ direction });
+      restartTimer();
+    });
+  }
+
   window.addEventListener("keydown", (event) => {
     const activeEl = document.activeElement;
     if (
@@ -369,6 +449,77 @@
       scrollPaneByDirection(-1);
     }
   });
+
+  const initMiniSlideshows = () => {
+    const miniSliders = Array.from(root.querySelectorAll("[data-mini-slideshow]"));
+    miniSliders.forEach((slider) => {
+      const miniSlides = Array.from(slider.querySelectorAll(".mini-slide"));
+      const miniDots = Array.from(slider.querySelectorAll(".mini-dot"));
+
+      if (!miniSlides.length) {
+        return;
+      }
+
+      let miniIndex = 0;
+      let suppressTapUntil = 0;
+
+      const setMiniActive = (index) => {
+        miniIndex = (index + miniSlides.length) % miniSlides.length;
+        miniSlides.forEach((slide, i) => {
+          const active = i === miniIndex;
+          slide.classList.toggle("is-active", active);
+          slide.setAttribute("aria-hidden", active ? "false" : "true");
+        });
+
+        miniDots.forEach((dot, i) => {
+          dot.classList.toggle("is-active", i === miniIndex);
+        });
+      };
+
+      miniDots.forEach((dot) => {
+        dot.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const slot = Number(dot.getAttribute("data-mini-slot"));
+          if (Number.isNaN(slot)) {
+            return;
+          }
+          setMiniActive(slot);
+        });
+      });
+
+      slider.addEventListener("click", (event) => {
+        if (!isMobile() || miniSlides.length < 2) {
+          return;
+        }
+
+        if (Date.now() < suppressTapUntil) {
+          return;
+        }
+
+        const target = event.target;
+        if (target instanceof Element && target.closest(".mini-dot")) {
+          return;
+        }
+
+        const rect = slider.getBoundingClientRect();
+        const relativeX = event.clientX - rect.left;
+        const direction = relativeX < rect.width / 2 ? -1 : 1;
+        setMiniActive(miniIndex + direction);
+      });
+
+      addSwipeNavigation(slider, (direction) => {
+        if (miniSlides.length < 2) {
+          return;
+        }
+        setMiniActive(miniIndex + direction);
+        suppressTapUntil = Date.now() + 360;
+      });
+
+      setMiniActive(0);
+    });
+  };
+
+  initMiniSlideshows();
 
   runSlideTransition({ targetSlot: 0 });
   restartTimer();
