@@ -778,8 +778,8 @@ h3 {
   }
 
   .split-left {
-    height: 100lvh;
-    min-height: 100lvh;
+    height: 100svh;
+    min-height: 100svh;
     overflow: hidden;
     scroll-snap-align: start;
     scroll-snap-stop: always;
@@ -799,7 +799,7 @@ h3 {
     justify-items: center;
     text-align: center;
     gap: 0.6rem;
-    padding: 12svh 1rem 8svh;
+    padding: 12vh 1rem 8vh;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 32%, rgba(0, 0, 0, 0.42) 100%);
     z-index: 4;
     pointer-events: none;
@@ -807,8 +807,8 @@ h3 {
 
   @supports (padding: max(0px)) {
     .mobile-hero-overlay {
-      padding-top: max(12svh, calc(env(safe-area-inset-top) + 0.4rem));
-      padding-bottom: max(8svh, calc(env(safe-area-inset-bottom) + 0.9rem));
+      padding-top: max(12vh, env(safe-area-inset-top));
+      padding-bottom: max(8vh, env(safe-area-inset-bottom));
       padding-left: max(1rem, env(safe-area-inset-left));
       padding-right: max(1rem, env(safe-area-inset-right));
     }
@@ -852,31 +852,6 @@ h3 {
     min-height: 100dvh;
     scroll-snap-align: start;
     scroll-snap-stop: always;
-  }
-
-  #pane-families,
-  #pane-schedule-1,
-  #pane-schedule-2,
-  #pane-links {
-    position: sticky;
-    top: 0;
-    background: #ffffff;
-  }
-
-  #pane-families {
-    z-index: 2;
-  }
-
-  #pane-schedule-1 {
-    z-index: 3;
-  }
-
-  #pane-schedule-2 {
-    z-index: 4;
-  }
-
-  #pane-links {
-    z-index: 5;
   }
 
   .pane:not(.pane-schedule) .pane-inner {
