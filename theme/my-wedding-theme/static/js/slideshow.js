@@ -364,6 +364,57 @@
     setActive(mapSlotToSlideIndex(currentSlot));
   };
 
+  const transitionForPaneChange = (paneId) => {
+    if (!paneId) {
+      return;
+    }
+
+    const slots = getSlotsForPane(paneId);
+    const mapSlotToSlideIndex = getPanePhotoMapper(paneId);
+    if (!slots.length || !mapSlotToSlideIndex) {
+      return;
+    }
+
+    activePaneId = paneId;
+
+    if (slots.length === 1) {
+      currentSlot = 0;
+      setActive(mapSlotToSlideIndex(0));
+      return;
+    }
+
+    const slotForCurrentSlide = getSlotForPaneAndSlide(paneId, currentIndex);
+    const nextSlot = slotForCurrentSlide >= 0 ? slotForCurrentSlide + 1 : 0;
+    currentSlot = ((nextSlot % slots.length) + slots.length) % slots.length;
+    setActive(mapSlotToSlideIndex(currentSlot));
+  };
+
+  let observedPaneId = null;
+  let paneChangeTicking = false;
+
+  const syncSlideshowToPane = () => {
+    const paneId = getDisplayedPaneId();
+    if (!paneId || paneId === observedPaneId) {
+      return;
+    }
+
+    observedPaneId = paneId;
+    transitionForPaneChange(paneId);
+    restartTimer();
+  };
+
+  const queuePaneSync = () => {
+    if (paneChangeTicking) {
+      return;
+    }
+
+    paneChangeTicking = true;
+    window.requestAnimationFrame(() => {
+      paneChangeTicking = false;
+      syncSlideshowToPane();
+    });
+  };
+
   root.querySelector("[data-prev]")?.addEventListener("click", () => {
     runSlideTransition({ direction: -1 });
     restartTimer();
@@ -450,6 +501,11 @@
     }
   });
 
+  detailsPane?.addEventListener("scroll", queuePaneSync, { passive: true });
+  mainScroller?.addEventListener("scroll", queuePaneSync, { passive: true });
+  window.addEventListener("scroll", queuePaneSync, { passive: true });
+  window.addEventListener("resize", queuePaneSync);
+
   const initMiniSlideshows = () => {
     const miniSliders = Array.from(root.querySelectorAll("[data-mini-slideshow]"));
     miniSliders.forEach((slider) => {
@@ -522,5 +578,6 @@
   initMiniSlideshows();
 
   runSlideTransition({ targetSlot: 0 });
+  observedPaneId = getDisplayedPaneId();
   restartTimer();
 })();
