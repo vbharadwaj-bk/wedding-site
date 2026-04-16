@@ -12,7 +12,7 @@ intro_right_dates: "Nov. 25-27"
 pane_slides:
   pane-intro:
     - garden_gate.jpg
-    - on_bench.jpg
+    - on_bridge.jpg
     - redwood_grove_center.jpg
     - tree_walk.jpg
 
@@ -118,7 +118,7 @@ slideshow_crops:
     y: 12
     w: 62
     h: 86
-  on_bench.jpg:
+  on_bridge.jpg:
     x: 20
     y: 20
     w: 58

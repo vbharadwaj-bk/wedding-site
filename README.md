@@ -6,14 +6,13 @@ All text content and configuration options are in `content/config.yml`.
 
 1. Put high-resolution slideshow photos in highres_slides. The photo names must
    match those specified in `config.yml`.
-2. Put your font file in fonts. The font name is specified in `config.yml`.
-3. Install runtime dependencies (used for Pelican build/serve):
+2. Install runtime dependencies (used for Pelican build/serve):
 
    ```bash
    python3 -m pip install -r requirements.txt
    ```
 
-4. Install prebuild-only dependencies locally:
+3. Install prebuild-only dependencies locally:
 
    ```bash
    python3 -m pip install -r requirements-prebuild.txt
@@ -27,9 +26,8 @@ All text content and configuration options are in `content/config.yml`.
    python3 scripts/prebuild.py
    ```
 
-   The prebuild step does two things:
-   - Renders content/images/logo/names-lockup.svg from config and the selected font.
-   - Minifies highres_slides images into content/images/slides using logo.jpeg_quality.
+   The prebuild step minifies highres_slides images into content/images/slides using
+   logo.jpeg_quality.
 
 2. Build the site: 
 
@@ -40,8 +38,8 @@ All text content and configuration options are in `content/config.yml`.
 ## CI / GitHub Actions
 
 GitHub Actions does not run prebuild and only installs dependencies from
-`requirements.txt`. Commit prebuilt assets (logo lockup SVG and minified slides)
-before pushing so CI can build with Pelican only.
+`requirements.txt`. Commit prebuilt slide assets before pushing so CI can build
+with Pelican only.
 
 ## Useful Options
 
@@ -49,10 +47,6 @@ before pushing so CI can build with Pelican only.
 
   python3 scripts/prebuild.py --dry-run
 
-- Run only logo rendering:
-
-  python3 scripts/prebuild.py --skip-slides
-
 - Run only slide minification:
 
-  python3 scripts/prebuild.py --skip-logo
+   python3 scripts/prebuild.py
