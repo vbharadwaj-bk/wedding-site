@@ -53,17 +53,6 @@
   const paneButtons = Array.from(root.querySelectorAll(".pane-scroll-btn"));
   const paneSections = Array.from(root.querySelectorAll(".split-right .pane[id]"));
 
-  const isMainScrollerActive = () => {
-    if (!mainScroller) {
-      return false;
-    }
-
-    const styles = window.getComputedStyle(mainScroller);
-    const overflowY = styles.overflowY;
-    const canScroll = mainScroller.scrollHeight > mainScroller.clientHeight + 1;
-    return (overflowY === "auto" || overflowY === "scroll") && canScroll;
-  };
-
   const isInnerScrollerActive = () => {
     if (!detailsPane) {
       return false;
@@ -88,7 +77,7 @@
       return;
     }
 
-    if (isMainScrollerActive()) {
+    if (mainScroller) {
       const top = target.offsetTop;
       mainScroller.scrollTo({
         top,
