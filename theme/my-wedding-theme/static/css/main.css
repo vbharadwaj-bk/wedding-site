@@ -748,14 +748,17 @@ h3 {
   html,
   body {
     height: 100%;
+    overflow-x: hidden;
   }
 
   .home-page {
     overflow: hidden;
+    overscroll-behavior-y: contain;
   }
 
   .home-page main {
-    height: 100svh;
+    height: 100dvh;
+    min-height: 100dvh;
     overflow-x: hidden;
     overflow-y: auto;
     scroll-snap-type: y mandatory;
@@ -773,14 +776,17 @@ h3 {
   }
 
   .split-left {
-    min-height: 100svh;
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }
 
   .slideshow-pane {
     position: relative;
-    min-height: 100svh;
+    height: 100%;
+    min-height: 100%;
   }
 
   .mobile-hero-overlay {
@@ -789,10 +795,29 @@ h3 {
     display: grid;
     align-content: end;
     justify-items: center;
+    text-align: center;
     gap: 0.6rem;
-    padding: 14vh 1.2rem 9vh;
+    padding: 12vh 1rem 8vh;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 32%, rgba(0, 0, 0, 0.42) 100%);
     z-index: 4;
+  }
+
+  @supports (padding: max(0px)) {
+    .mobile-hero-overlay {
+      padding-top: max(12vh, env(safe-area-inset-top));
+      padding-bottom: max(8vh, env(safe-area-inset-bottom));
+      padding-left: max(1rem, env(safe-area-inset-left));
+      padding-right: max(1rem, env(safe-area-inset-right));
+    }
+  }
+
+  .mobile-hero-overlay .pane-meta-split {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .mobile-couple-lockup {
+    width: min(500px, 92vw);
   }
 
   .mobile-couple-heading {
@@ -820,10 +845,33 @@ h3 {
   }
 
   .pane {
-    height: 100svh;
-    min-height: 100svh;
+    height: 100dvh;
+    min-height: 100dvh;
     scroll-snap-align: start;
     scroll-snap-stop: always;
+  }
+
+  .pane:not(.pane-schedule) .pane-inner {
+    padding-top: 8.5vh;
+    padding-bottom: 8.5vh;
+  }
+
+  @supports (padding: max(0px)) {
+    .pane .pane-inner {
+      padding-top: max(8.5vh, calc(env(safe-area-inset-top) + 1rem));
+      padding-bottom: max(8.5vh, calc(env(safe-area-inset-bottom) + 0.8rem));
+    }
+
+    .pane.pane-schedule .pane-inner {
+      padding-top: max(9vh, calc(env(safe-area-inset-top) + 1rem));
+      padding-bottom: max(9vh, calc(env(safe-area-inset-bottom) + 0.8rem));
+    }
+  }
+
+  .pane:not(.pane-schedule) p,
+  .pane:not(.pane-schedule) li {
+    font-size: 0.9rem;
+    line-height: 1.62;
   }
 
   .split-story {
