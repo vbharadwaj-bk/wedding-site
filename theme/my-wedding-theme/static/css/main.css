@@ -756,18 +756,16 @@ h3 {
   }
 
   .home-page {
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: visible;
     overscroll-behavior-y: contain;
   }
 
   .home-page main {
-    height: 100dvh;
+    height: auto;
     min-height: 100dvh;
-    overflow-x: hidden;
-    overflow-y: auto;
-    scroll-snap-type: y mandatory;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible;
+    scroll-snap-type: none;
   }
 
   .home-page .site-footer {
@@ -780,8 +778,8 @@ h3 {
   }
 
   .split-left {
-    height: 100dvh;
-    min-height: 100dvh;
+    height: 100svh;
+    min-height: 100svh;
     overflow: hidden;
     scroll-snap-align: start;
     scroll-snap-stop: always;
