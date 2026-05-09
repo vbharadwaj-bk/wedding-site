@@ -481,7 +481,7 @@ function upsertDesignPoint(points, ratio, crop) {
   }
 
   points.push(nextPoint);
-  points.sort((a, b) => a.ratio - b.ratio);
+  points.sort((a, b) => a.aspectRatio - b.aspectRatio);
   return findExactDesignPointIndex(points, ratio);
 }
 
@@ -1039,10 +1039,7 @@ function wireEvents() {
   els.aspectLabel.textContent = state.ratioValue.toFixed(3);
 
   els.aspectSlider.addEventListener('input', (event) => {
-    let nextRatio = clamp(Number(event.target.value), state.ratioMin, state.ratioMax);
-    const points = getCurrentCropPoints();
-    nextRatio = snapRatioToNearbyPoint(nextRatio, points);
-    state.ratioValue = nextRatio;
+    state.ratioValue = clamp(Number(event.target.value), state.ratioMin, state.ratioMax);
     els.aspectSlider.value = String(state.ratioValue);
     draw();
   });

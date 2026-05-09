@@ -1,8 +1,12 @@
 images:
   'after_proposal.JPG':
+    - aspectRatio: 1.227
+      x: 768.071
+      y: 903.74
+      scale: 1529.695
     - aspectRatio: 1.778
       x: 768.071
-      y: 749.962
+      y: 639.451
       scale: 1529.695
   'birds.jpeg':
     - aspectRatio: 1.778
