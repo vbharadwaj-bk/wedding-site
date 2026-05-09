@@ -215,8 +215,17 @@ function readRequestBody(req) {
   });
 }
 
-function ratioKey(ratio) {
-  return Number(ratio).toFixed(6);
+function normalizePointEntry(point, fallbackAspectRatio = null) {
+  const aspectRatio = Number(point && point.aspectRatio !== undefined ? point.aspectRatio : fallbackAspectRatio);
+  const x = Number(point && point.x);
+  const y = Number(point && point.y);
+  const scale = Number(point && point.scale);
+
+  if (!Number.isFinite(aspectRatio) || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(scale)) {
+    return null;
+  }
+
+  return { aspectRatio, x, y, scale };
 }
 
 function normalizeCropPoints(parsed) {
@@ -231,26 +240,34 @@ function normalizeCropPoints(parsed) {
   const normalized = {};
 
   for (const [imageName, points] of Object.entries(images)) {
-    if (!points || typeof points !== 'object' || Array.isArray(points)) {
+    if (!points || typeof points !== 'object') {
       throw new Error(`Invalid design point entry for ${imageName}`);
     }
 
-    const pointMap = {};
+    const pointList = [];
 
-    for (const [ratioLabel, point] of Object.entries(points)) {
-      const ratio = Number(ratioLabel);
-      const x = Number(point && point.x);
-      const y = Number(point && point.y);
-      const scale = Number(point && point.scale);
+    if (Array.isArray(points)) {
+      for (const point of points) {
+        const normalizedPoint = normalizePointEntry(point);
+        if (!normalizedPoint) {
+          throw new Error(`Invalid design point data for ${imageName}`);
+        }
 
-      if (!Number.isFinite(ratio) || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(scale)) {
-        throw new Error(`Invalid design point data for ${imageName} at ratio ${ratioLabel}`);
+        pointList.push(normalizedPoint);
       }
+    } else {
+      for (const [ratioLabel, point] of Object.entries(points)) {
+        const normalizedPoint = normalizePointEntry(point, ratioLabel);
+        if (!normalizedPoint) {
+          throw new Error(`Invalid design point data for ${imageName} at ratio ${ratioLabel}`);
+        }
 
-      pointMap[ratioKey(ratio)] = { x, y, scale };
+        pointList.push(normalizedPoint);
+      }
     }
 
-    normalized[imageName] = pointMap;
+    pointList.sort((a, b) => a.aspectRatio - b.aspectRatio);
+    normalized[imageName] = pointList;
   }
 
   return normalized;

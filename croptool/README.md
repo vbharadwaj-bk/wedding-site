@@ -9,7 +9,7 @@ A local Node.js web app for selecting image design points and saving them to `cr
 - Lets you select an image and move a crop box on a large canvas.
 - Shows a translucent haze outside the crop box.
 - Draws a bright reticle at the crop center.
-- Stores design points in memory as a dictionary mapping image names to aspect-ratio keyed `{ x, y, scale }` values.
+- Stores design points in memory as a dictionary mapping image names to lists of `{ aspectRatio, x, y, scale }` dictionaries.
 - Automatically loads the last selected folder path when available.
 - Saves crop settings back into a `crops.yaml` file in the selected folder path.
 

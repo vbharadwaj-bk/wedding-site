@@ -1,61 +1,61 @@
 images:
   'after_proposal.JPG':
-    '1.777778':
-      x: 764.847
-      y: 711.87
+    - aspectRatio: 1.778
+      x: 768.071
+      y: 749.962
       scale: 1529.695
   'birds.jpeg':
-    '1.777778':
-      x: 512
-      y: 384
-      scale: 716.8
+    - aspectRatio: 1.778
+      x: 489.111
+      y: 366.022
+      scale: 949.62
   'engaged.jpeg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 2040
       y: 1536
       scale: 2856
   'engagement_ask.jpeg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 591
       y: 332.5
       scale: 827.4
   'garden_gate.jpg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1779
       y: 2668.5
       scale: 2490.6
   'hands_on_face.jpeg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1606.5
       y: 2409.5
       scale: 2249.1
   'malini_rice.jpeg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1536
       y: 2040
       scale: 2150.4
   'on_bridge.jpg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1331
       y: 1996.5
       scale: 1863.4
   'redwood_grove_center.jpg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1551.5
       y: 2327.5
       scale: 2172.1
   'shyamala_rice.jpeg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1536
       y: 2040
       scale: 2150.4
   'tree_walk.jpg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1824
       y: 2736
       scale: 2553.6
   'with_family.jpeg':
-    '1.777778':
+    - aspectRatio: 1.778
       x: 1780.5
       y: 1536
       scale: 2492.7

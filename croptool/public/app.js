@@ -54,10 +54,6 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-function ratioKey(ratio) {
-  return Number(ratio).toFixed(6);
-}
-
 function formatNumber(value) {
   return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(3)));
 }
@@ -126,7 +122,7 @@ function makeDefaultCrop(imageWidth, imageHeight, ratioValue) {
 function makeDefaultDesignPoint(image) {
   const crop = makeDefaultCrop(image.width, image.height, DEFAULT_DESIGN_RATIO);
   return {
-    ratio: DEFAULT_DESIGN_RATIO,
+    aspectRatio: DEFAULT_DESIGN_RATIO,
     x: crop.x,
     y: crop.y,
     scale: crop.w
@@ -239,7 +235,7 @@ function buildCropYaml(designPointsByImage) {
     const points = getDesignPointEntries(designPointsByImage, imageName);
 
     for (const point of points) {
-      lines.push(`    ${quoteYamlString(ratioKey(point.ratio))}:`);
+      lines.push(`    - aspectRatio: ${formatNumber(point.aspectRatio)}`);
       lines.push(`      x: ${formatNumber(point.x)}`);
       lines.push(`      y: ${formatNumber(point.y)}`);
       lines.push(`      scale: ${formatNumber(point.scale)}`);
@@ -307,8 +303,54 @@ function getDesignPointsMapForImage(imageName) {
   return state.designPointsByImage[imageName] || null;
 }
 
-function setDesignPointsMapForImage(imageName, map) {
-  state.designPointsByImage[imageName] = map;
+function normalizeDesignPointEntry(point) {
+  const aspectRatio = Number(point && point.aspectRatio);
+  const x = Number(point && point.x);
+  const y = Number(point && point.y);
+  const scale = Number(point && point.scale);
+
+  if (!Number.isFinite(aspectRatio) || !Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(scale)) {
+    return null;
+  }
+
+  return { aspectRatio, x, y, scale };
+}
+
+function normalizeDesignPointEntries(entries) {
+  if (!entries) {
+    return [];
+  }
+
+  const normalized = [];
+
+  if (Array.isArray(entries)) {
+    for (const entry of entries) {
+      const point = normalizeDesignPointEntry(entry);
+      if (point) {
+        normalized.push(point);
+      }
+    }
+  } else if (typeof entries === 'object') {
+    for (const [key, value] of Object.entries(entries)) {
+      const point = normalizeDesignPointEntry({
+        aspectRatio: value && value.aspectRatio !== undefined ? value.aspectRatio : key,
+        x: value && value.x,
+        y: value && value.y,
+        scale: value && value.scale
+      });
+
+      if (point) {
+        normalized.push(point);
+      }
+    }
+  }
+
+  normalized.sort((a, b) => a.aspectRatio - b.aspectRatio);
+  return normalized;
+}
+
+function setDesignPointsMapForImage(imageName, points) {
+  state.designPointsByImage[imageName] = normalizeDesignPointEntries(points);
 }
 
 function getDesignPointEntries(designPointsByImage = state.designPointsByImage, imageName = null) {
@@ -317,31 +359,11 @@ function getDesignPointEntries(designPointsByImage = state.designPointsByImage, 
     return [];
   }
 
-  const map = designPointsByImage[targetName] || {};
-  return Object.entries(map)
-    .map(([key, value]) => ({
-      ratio: Number(key),
-      x: Number(value.x),
-      y: Number(value.y),
-      scale: Number(value.scale)
-    }))
-    .filter((point) => Number.isFinite(point.ratio) && Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.scale))
-    .sort((a, b) => a.ratio - b.ratio);
+  return normalizeDesignPointEntries(designPointsByImage[targetName]);
 }
 
 function setDesignPointEntries(imageName, entries) {
-  const nextMap = {};
-  const sorted = [...entries].sort((a, b) => a.ratio - b.ratio);
-
-  for (const point of sorted) {
-    nextMap[ratioKey(point.ratio)] = {
-      x: point.x,
-      y: point.y,
-      scale: point.scale
-    };
-  }
-
-  setDesignPointsMapForImage(imageName, nextMap);
+  setDesignPointsMapForImage(imageName, entries);
 }
 
 function ensureDesignPointsForImage(imageName, imageWidth, imageHeight, changedImages = new Set()) {
@@ -362,7 +384,7 @@ function ensureDesignPointsForLoadedImages(changedImages = new Set()) {
 }
 
 function findExactDesignPointIndex(points, ratio) {
-  return points.findIndex((point) => Math.abs(point.ratio - ratio) <= RATIO_EPSILON);
+  return points.findIndex((point) => Math.abs(point.aspectRatio - ratio) <= RATIO_EPSILON);
 }
 
 function findNearestDesignPoint(points, ratio) {
@@ -371,10 +393,10 @@ function findNearestDesignPoint(points, ratio) {
   }
 
   let bestIndex = 0;
-  let bestDistance = Math.abs(points[0].ratio - ratio);
+  let bestDistance = Math.abs(points[0].aspectRatio - ratio);
 
   for (let i = 1; i < points.length; i += 1) {
-    const distance = Math.abs(points[i].ratio - ratio);
+    const distance = Math.abs(points[i].aspectRatio - ratio);
     if (distance < bestDistance) {
       bestDistance = distance;
       bestIndex = i;
@@ -410,10 +432,10 @@ function resolveCropAtRatio(points, ratio, imageWidth, imageHeight) {
   if (exactIndex !== -1) {
     const point = points[exactIndex];
     crop = { x: point.x, y: point.y, w: point.scale, h: point.scale / ratio };
-  } else if (ratio <= points[0].ratio) {
+  } else if (ratio <= points[0].aspectRatio) {
     const point = points[0];
     crop = { x: point.x, y: point.y, w: point.scale, h: point.scale / ratio };
-  } else if (ratio >= points[points.length - 1].ratio) {
+  } else if (ratio >= points[points.length - 1].aspectRatio) {
     const point = points[points.length - 1];
     crop = { x: point.x, y: point.y, w: point.scale, h: point.scale / ratio };
   } else {
@@ -423,14 +445,14 @@ function resolveCropAtRatio(points, ratio, imageWidth, imageHeight) {
     for (let i = 0; i < points.length - 1; i += 1) {
       const a = points[i];
       const b = points[i + 1];
-      if (ratio >= a.ratio && ratio <= b.ratio) {
+      if (ratio >= a.aspectRatio && ratio <= b.aspectRatio) {
         lower = a;
         upper = b;
         break;
       }
     }
 
-    const t = (ratio - lower.ratio) / (upper.ratio - lower.ratio);
+    const t = (ratio - lower.aspectRatio) / (upper.aspectRatio - lower.aspectRatio);
     const scale = lerp(lower.scale, upper.scale, t);
     crop = {
       x: lerp(lower.x, upper.x, t),
@@ -447,7 +469,7 @@ function resolveCropAtRatio(points, ratio, imageWidth, imageHeight) {
 function upsertDesignPoint(points, ratio, crop) {
   const exactIndex = findExactDesignPointIndex(points, ratio);
   const nextPoint = {
-    ratio,
+    aspectRatio: ratio,
     x: crop.x,
     y: crop.y,
     scale: crop.w
@@ -575,13 +597,13 @@ function updateSliderDecor(points, exactIndex) {
   for (const [index, point] of points.entries()) {
     const dot = document.createElement('div');
     dot.className = `design-point-dot ${index === exactIndex ? 'active' : ''}`;
-    const leftPercent = ((point.ratio - state.ratioMin) / (state.ratioMax - state.ratioMin)) * 100;
+    const leftPercent = ((point.aspectRatio - state.ratioMin) / (state.ratioMax - state.ratioMin)) * 100;
     dot.style.left = `${clamp(leftPercent, 0, 100)}%`;
-    dot.title = `Aspect ${point.ratio.toFixed(3)}`;
+    dot.title = `Aspect ${point.aspectRatio.toFixed(3)}`;
     dot.addEventListener('click', (event) => {
       event.preventDefault();
       event.stopPropagation();
-      state.ratioValue = point.ratio;
+      state.ratioValue = point.aspectRatio;
       els.aspectSlider.value = String(state.ratioValue);
       draw();
     });
@@ -757,15 +779,15 @@ function jumpToAdjacentDesignPoint(direction) {
   let targetRatio = state.ratioValue;
   if (direction > 0) {
     for (const point of points) {
-      if (point.ratio > state.ratioValue + RATIO_EPSILON) {
-        targetRatio = point.ratio;
+      if (point.aspectRatio > state.ratioValue + RATIO_EPSILON) {
+        targetRatio = point.aspectRatio;
         break;
       }
     }
   } else {
     for (let i = points.length - 1; i >= 0; i -= 1) {
-      if (points[i].ratio < state.ratioValue - RATIO_EPSILON) {
-        targetRatio = points[i].ratio;
+      if (points[i].aspectRatio < state.ratioValue - RATIO_EPSILON) {
+        targetRatio = points[i].aspectRatio;
         break;
       }
     }
@@ -797,7 +819,7 @@ function removeCurrentDesignPoint() {
 
   const nearest = findNearestDesignPoint(points, state.ratioValue);
   if (nearest.index !== -1) {
-    state.ratioValue = points[nearest.index].ratio;
+    state.ratioValue = points[nearest.index].aspectRatio;
     els.aspectSlider.value = String(state.ratioValue);
   }
 
