@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crop Center Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="title-wrap">
+        <h1>Crop Center Tool</h1>
+        <p>Select a folder, choose a photo, and place the crop center with precision.</p>
+      </div>
+      <div class="folder-controls">
+        <button id="pick-folder-btn" class="btn-primary" type="button">Select Folder</button>
+        <input id="folder-input" type="file" webkitdirectory multiple accept="image/png,image/jpeg,.png,.jpg,.jpeg" hidden>
+      </div>
+    </header>
+
+    <section class="thumb-strip-wrap">
+      <button id="thumb-left" class="thumb-nav" type="button" aria-label="Scroll thumbnails left">&#9664;</button>
+      <div id="thumb-strip" class="thumb-strip" aria-label="Image thumbnails"></div>
+      <button id="thumb-right" class="thumb-nav" type="button" aria-label="Scroll thumbnails right">&#9654;</button>
+    </section>
+
+    <main class="main-grid">
+      <section class="canvas-panel">
+        <canvas id="main-canvas"></canvas>
+        <div id="empty-state" class="empty-state">
+          No image selected. Pick a folder and click a thumbnail.
+        </div>
+      </section>
+
+      <aside class="control-panel">
+        <label for="aspect-slider" class="panel-label">Aspect Ratio</label>
+        <div class="slider-wrap">
+          <input id="aspect-slider" type="range" min="0" max="5" step="1" value="2">
+          <div id="design-point-strip" class="design-point-strip" aria-hidden="true"></div>
+        </div>
+        <div id="aspect-label" class="aspect-label">1.33</div>
+        <button id="remove-design-point-btn" class="btn-secondary" type="button">Remove Design Point</button>
+        <div class="slider-help">Shift-click left or right on the slider to jump design points. You can also use Shift + Left/Right Arrow.</div>
+
+        <div class="selected-meta">
+          <div class="meta-row"><span>Selected:</span><strong id="selected-name">None</strong></div>
+          <div class="meta-row"><span>Center X:</span><strong id="selected-x">-</strong></div>
+          <div class="meta-row"><span>Center Y:</span><strong id="selected-y">-</strong></div>
+        </div>
+
+        <button id="copy-json-btn" class="btn-secondary" type="button">Copy Design Points JSON</button>
+        <pre id="centers-json" class="json-preview">{}</pre>
+      </aside>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

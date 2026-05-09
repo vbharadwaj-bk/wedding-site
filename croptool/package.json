@@ -1,0 +1,13 @@
+{
+  "name": "wedding-croptool",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Interactive crop-center selection tool for wedding-site images",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
