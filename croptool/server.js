@@ -8,6 +8,7 @@ const START_PORT = Number.parseInt(process.env.PORT || '4173', 10);
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const CACHE_DIR = path.join(__dirname, '.croptool-cache');
 const LAST_FOLDER_FILE = path.join(CACHE_DIR, 'last-folder.json');
+const CROP_HELPER_FILE = 'crops-data.js';
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -162,6 +163,11 @@ async function readFolderAtPath(folderPath) {
 async function writeCropsFile(folderPath, content) {
   const resolvedPath = path.resolve(folderPath);
   await fsp.writeFile(path.join(resolvedPath, 'crops.yaml'), content, 'utf8');
+}
+
+async function writeCropHelperFile(folderPath, content) {
+  const resolvedPath = path.resolve(folderPath);
+  await fsp.writeFile(path.join(resolvedPath, CROP_HELPER_FILE), content, 'utf8');
 }
 
 async function deleteCropsFile(folderPath) {
@@ -372,6 +378,7 @@ function createServer() {
         const payload = body ? JSON.parse(body) : {};
         const folderPath = typeof payload.folderPath === 'string' ? payload.folderPath.trim() : '';
         const content = typeof payload.content === 'string' ? payload.content : '';
+        const jsContent = typeof payload.jsContent === 'string' ? payload.jsContent : '';
 
         if (!folderPath) {
           sendJson(res, 400, { ok: false, error: 'folderPath is required' });
@@ -383,7 +390,15 @@ function createServer() {
           return;
         }
 
-        writeCropsFile(folderPath, content)
+        if (!jsContent.trim()) {
+          sendJson(res, 400, { ok: false, error: 'jsContent is required' });
+          return;
+        }
+
+        Promise.all([
+          writeCropsFile(folderPath, content),
+          writeCropHelperFile(folderPath, jsContent)
+        ])
           .then(() => {
             sendJson(res, 200, { ok: true });
           })
