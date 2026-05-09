@@ -1,11 +1,17 @@
 const DEFAULT_DESIGN_RATIO = 1920 / 1080;
 const RATIO_EPSILON = 0.0005;
+const DB_NAME = 'croptool-state';
+const DB_VERSION = 1;
+const DB_STORE = 'handles';
+const DB_KEY = 'selected-folder-handle';
 
 const state = {
   images: [],
   selectedIndex: -1,
+  folderHandle: null,
+  folderName: '',
   designPointsByImage: {},
-  ratioValue: 1.33,
+  ratioValue: DEFAULT_DESIGN_RATIO,
   ratioMin: 0.4,
   ratioMax: 2.4,
   ratioStep: 0.001,
@@ -22,7 +28,6 @@ const state = {
 
 const els = {
   pickFolderBtn: document.getElementById('pick-folder-btn'),
-  folderInput: document.getElementById('folder-input'),
   thumbStrip: document.getElementById('thumb-strip'),
   thumbLeft: document.getElementById('thumb-left'),
   thumbRight: document.getElementById('thumb-right'),
@@ -32,11 +37,11 @@ const els = {
   designPointStrip: document.getElementById('design-point-strip'),
   aspectLabel: document.getElementById('aspect-label'),
   removeDesignPointBtn: document.getElementById('remove-design-point-btn'),
+  saveCropSettingsBtn: document.getElementById('save-crop-settings-btn'),
   selectedName: document.getElementById('selected-name'),
   selectedX: document.getElementById('selected-x'),
   selectedY: document.getElementById('selected-y'),
-  centersJson: document.getElementById('centers-json'),
-  copyJsonBtn: document.getElementById('copy-json-btn')
+  centersJson: document.getElementById('centers-json')
 };
 
 const ctx = els.canvas.getContext('2d');
@@ -49,8 +54,16 @@ function lerp(a, b, t) {
   return a + (b - a) * t;
 }
 
-function normalizeRatio(ratio) {
-  return clamp(ratio, state.ratioMin, state.ratioMax);
+function ratioKey(ratio) {
+  return Number(ratio).toFixed(6);
+}
+
+function formatNumber(value) {
+  return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(3)));
+}
+
+function quoteYamlString(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
 }
 
 function isSupportedImage(file) {
@@ -62,16 +75,19 @@ function isSupportedImage(file) {
   return lower.endsWith('.png') || lower.endsWith('.jpg') || lower.endsWith('.jpeg');
 }
 
-function loadImageFromFile(file) {
+function isProbablyYamlFile(file) {
+  return file && file.name.toLowerCase() === 'crops.yaml';
+}
+
+function loadImageFromRecord(record) {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
     const img = new Image();
 
     img.onload = () => {
       resolve({
-        file,
-        name: file.name,
-        url,
+        name: record.name,
+        displayName: record.displayName || record.name,
+        url: record.dataUrl,
         width: img.naturalWidth,
         height: img.naturalHeight,
         element: img
@@ -79,11 +95,10 @@ function loadImageFromFile(file) {
     };
 
     img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error(`Failed to load image: ${file.name}`));
+      reject(new Error(`Failed to load image: ${record.name}`));
     };
 
-    img.src = url;
+    img.src = record.dataUrl;
   });
 }
 
@@ -118,8 +133,232 @@ function makeDefaultDesignPoint(image) {
   };
 }
 
-function sortDesignPoints(points) {
-  points.sort((a, b) => a.ratio - b.ratio);
+function openStateDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(DB_STORE)) {
+        db.createObjectStore(DB_STORE);
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error || new Error('Unable to open IndexedDB'));
+  });
+}
+
+async function fetchLastFolderCache() {
+  const response = await fetch('/api/last-folder');
+  const payload = await response.json();
+
+  if (!response.ok || !payload.ok) {
+    return null;
+  }
+
+  return payload.data || null;
+}
+
+async function saveLastFolderCache(folderPath, folderName) {
+  if (!folderPath) {
+    return;
+  }
+
+  await fetch('/api/last-folder', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderPath, folderName })
+  });
+}
+
+async function requestFolderSelection() {
+  const response = await fetch('/api/folder-path', { method: 'POST' });
+  const payload = await response.json();
+
+  if (payload.cancelled) {
+    return null;
+  }
+
+  if (!response.ok || !payload.ok || !payload.data) {
+    throw new Error(payload.error || 'Folder selection failed');
+  }
+
+  return payload.data;
+}
+
+async function fetchFolderData(folderPath) {
+  const response = await fetch('/api/read-folder', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderPath })
+  });
+
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || 'Folder load failed');
+  }
+
+  return payload.data;
+}
+
+async function deleteCropsFile(folderPath) {
+  const response = await fetch('/api/delete-crops', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderPath })
+  });
+
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || 'Unable to delete crops.yaml');
+  }
+}
+
+async function parseCropsYamlText(content) {
+  const response = await fetch('/api/parse-crops', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || 'Design point parse failed');
+  }
+
+  return payload.designPointsByImage || {};
+}
+
+function buildCropYaml(designPointsByImage) {
+  const lines = ['images:'];
+  const imageNames = Object.keys(designPointsByImage).sort((a, b) => a.localeCompare(b));
+
+  for (const imageName of imageNames) {
+    lines.push(`  ${quoteYamlString(imageName)}:`);
+    const points = getDesignPointEntries(designPointsByImage, imageName);
+
+    for (const point of points) {
+      lines.push(`    ${quoteYamlString(ratioKey(point.ratio))}:`);
+      lines.push(`      x: ${formatNumber(point.x)}`);
+      lines.push(`      y: ${formatNumber(point.y)}`);
+      lines.push(`      scale: ${formatNumber(point.scale)}`);
+    }
+  }
+
+  return `${lines.join('\n')}\n`;
+}
+
+async function writeCurrentCropSettings() {
+  if (!state.folderHandle) {
+    throw new Error('Select a folder before saving crop settings.');
+  }
+
+  const yamlText = buildCropYaml(state.designPointsByImage);
+  const response = await fetch('/api/save-crops', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ folderPath: state.folderHandle, content: yamlText })
+  });
+
+  const payload = await response.json();
+  if (!response.ok || !payload.ok) {
+    throw new Error(payload.error || 'Unable to save crop settings');
+  }
+}
+
+async function saveCurrentCropSettingsWithFeedback() {
+  const originalLabel = els.saveCropSettingsBtn.textContent;
+  els.saveCropSettingsBtn.textContent = 'Saving...';
+
+  try {
+    await writeCurrentCropSettings();
+    els.saveCropSettingsBtn.textContent = 'Saved';
+    setTimeout(() => {
+      els.saveCropSettingsBtn.textContent = originalLabel;
+    }, 900);
+  } catch (error) {
+    console.warn(error);
+    els.saveCropSettingsBtn.textContent = 'Save failed';
+    setTimeout(() => {
+      els.saveCropSettingsBtn.textContent = originalLabel;
+    }, 1100);
+    window.alert(error.message || 'Unable to save crop settings.');
+  }
+}
+
+async function autoSaveCropSettings() {
+  try {
+    await writeCurrentCropSettings();
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
+function getSelectedImage() {
+  if (state.selectedIndex < 0 || state.selectedIndex >= state.images.length) {
+    return null;
+  }
+
+  return state.images[state.selectedIndex];
+}
+
+function getDesignPointsMapForImage(imageName) {
+  return state.designPointsByImage[imageName] || null;
+}
+
+function setDesignPointsMapForImage(imageName, map) {
+  state.designPointsByImage[imageName] = map;
+}
+
+function getDesignPointEntries(designPointsByImage = state.designPointsByImage, imageName = null) {
+  const targetName = imageName || getSelectedImage()?.name;
+  if (!targetName) {
+    return [];
+  }
+
+  const map = designPointsByImage[targetName] || {};
+  return Object.entries(map)
+    .map(([key, value]) => ({
+      ratio: Number(key),
+      x: Number(value.x),
+      y: Number(value.y),
+      scale: Number(value.scale)
+    }))
+    .filter((point) => Number.isFinite(point.ratio) && Number.isFinite(point.x) && Number.isFinite(point.y) && Number.isFinite(point.scale))
+    .sort((a, b) => a.ratio - b.ratio);
+}
+
+function setDesignPointEntries(imageName, entries) {
+  const nextMap = {};
+  const sorted = [...entries].sort((a, b) => a.ratio - b.ratio);
+
+  for (const point of sorted) {
+    nextMap[ratioKey(point.ratio)] = {
+      x: point.x,
+      y: point.y,
+      scale: point.scale
+    };
+  }
+
+  setDesignPointsMapForImage(imageName, nextMap);
+}
+
+function ensureDesignPointsForImage(imageName, imageWidth, imageHeight, changedImages = new Set()) {
+  const currentEntries = getDesignPointEntries(state.designPointsByImage, imageName);
+  if (currentEntries.length > 0) {
+    return;
+  }
+
+  const defaultPoint = makeDefaultDesignPoint({ width: imageWidth, height: imageHeight });
+  setDesignPointEntries(imageName, [defaultPoint]);
+  changedImages.add(imageName);
+}
+
+function ensureDesignPointsForLoadedImages(changedImages = new Set()) {
+  for (const image of state.images) {
+    ensureDesignPointsForImage(image.name, image.width, image.height, changedImages);
+  }
 }
 
 function findExactDesignPointIndex(points, ratio) {
@@ -145,56 +384,18 @@ function findNearestDesignPoint(points, ratio) {
   return { index: bestIndex, distance: bestDistance };
 }
 
-function getSelectedImage() {
-  if (state.selectedIndex < 0 || state.selectedIndex >= state.images.length) {
-    return null;
-  }
-
-  return state.images[state.selectedIndex];
-}
-
-function getDesignPointsForSelected() {
-  const selected = getSelectedImage();
-  if (!selected) {
-    return [];
-  }
-
-  if (!state.designPointsByImage[selected.name]) {
-    state.designPointsByImage[selected.name] = [makeDefaultDesignPoint(selected)];
-  }
-
-  const points = state.designPointsByImage[selected.name];
-  sortDesignPoints(points);
-  return points;
-}
-
-function makeCropFromDesignPoint(point, ratio) {
-  return {
-    x: point.x,
-    y: point.y,
-    w: point.scale,
-    h: point.scale / ratio
-  };
-}
-
-function clampScaleToFitAtCenter(crop, imageWidth, imageHeight, ratio) {
+function clampCropToImage(crop, imageWidth, imageHeight, ratioValue) {
   crop.x = clamp(crop.x, 0, imageWidth);
   crop.y = clamp(crop.y, 0, imageHeight);
 
-  const maxWByX = 2 * Math.min(crop.x, imageWidth - crop.x);
-  const maxWByY = 2 * Math.min(crop.y, imageHeight - crop.y) * ratio;
-  const maxFeasibleWidth = Math.max(2, Math.min(maxWByX, maxWByY, imageWidth, imageHeight * ratio));
+  const maxScaleByX = 2 * Math.min(crop.x, imageWidth - crop.x);
+  const maxScaleByY = 2 * Math.min(crop.y, imageHeight - crop.y) * ratioValue;
+  const maxScale = Math.max(2, Math.min(maxScaleByX, maxScaleByY, imageWidth, imageHeight * ratioValue));
 
-  crop.w = clamp(crop.w, 2, maxFeasibleWidth);
-  crop.h = crop.w / ratio;
-}
-
-function clampCenterToFit(crop, imageWidth, imageHeight) {
-  const halfW = crop.w / 2;
-  const halfH = crop.h / 2;
-
-  crop.x = clamp(crop.x, halfW, imageWidth - halfW);
-  crop.y = clamp(crop.y, halfH, imageHeight - halfH);
+  crop.w = clamp(crop.w, 2, maxScale);
+  crop.h = crop.w / ratioValue;
+  crop.x = clamp(crop.x, crop.w / 2, imageWidth - crop.w / 2);
+  crop.y = clamp(crop.y, crop.h / 2, imageHeight - crop.h / 2);
 }
 
 function resolveCropAtRatio(points, ratio, imageWidth, imageHeight) {
@@ -207,73 +408,111 @@ function resolveCropAtRatio(points, ratio, imageWidth, imageHeight) {
   let crop;
 
   if (exactIndex !== -1) {
-    crop = makeCropFromDesignPoint(points[exactIndex], ratio);
-  } else if (ratio < points[0].ratio) {
-    crop = makeCropFromDesignPoint(points[0], ratio);
-  } else if (ratio > points[points.length - 1].ratio) {
-    crop = makeCropFromDesignPoint(points[points.length - 1], ratio);
+    const point = points[exactIndex];
+    crop = { x: point.x, y: point.y, w: point.scale, h: point.scale / ratio };
+  } else if (ratio <= points[0].ratio) {
+    const point = points[0];
+    crop = { x: point.x, y: point.y, w: point.scale, h: point.scale / ratio };
+  } else if (ratio >= points[points.length - 1].ratio) {
+    const point = points[points.length - 1];
+    crop = { x: point.x, y: point.y, w: point.scale, h: point.scale / ratio };
   } else {
     let lower = points[0];
     let upper = points[points.length - 1];
 
     for (let i = 0; i < points.length - 1; i += 1) {
-      const p0 = points[i];
-      const p1 = points[i + 1];
-      if (ratio >= p0.ratio && ratio <= p1.ratio) {
-        lower = p0;
-        upper = p1;
+      const a = points[i];
+      const b = points[i + 1];
+      if (ratio >= a.ratio && ratio <= b.ratio) {
+        lower = a;
+        upper = b;
         break;
       }
     }
 
     const t = (ratio - lower.ratio) / (upper.ratio - lower.ratio);
+    const scale = lerp(lower.scale, upper.scale, t);
     crop = {
       x: lerp(lower.x, upper.x, t),
       y: lerp(lower.y, upper.y, t),
-      w: lerp(lower.scale, upper.scale, t),
-      h: lerp(lower.scale, upper.scale, t) / ratio
+      w: scale,
+      h: scale / ratio
     };
   }
 
-  clampScaleToFitAtCenter(crop, imageWidth, imageHeight, ratio);
+  clampCropToImage(crop, imageWidth, imageHeight, ratio);
   return { crop, exactIndex };
 }
 
 function upsertDesignPoint(points, ratio, crop) {
   const exactIndex = findExactDesignPointIndex(points, ratio);
-  if (exactIndex !== -1) {
-    points[exactIndex].x = crop.x;
-    points[exactIndex].y = crop.y;
-    points[exactIndex].scale = crop.w;
-    return exactIndex;
-  }
-
-  points.push({
+  const nextPoint = {
     ratio,
     x: crop.x,
     y: crop.y,
     scale: crop.w
-  });
+  };
 
-  sortDesignPoints(points);
+  if (exactIndex !== -1) {
+    points[exactIndex] = nextPoint;
+    return exactIndex;
+  }
+
+  points.push(nextPoint);
+  points.sort((a, b) => a.ratio - b.ratio);
   return findExactDesignPointIndex(points, ratio);
 }
 
-function ensureEditablePointAtCurrentRatio() {
+function getCurrentCropPoints() {
   const selected = getSelectedImage();
   if (!selected) {
-    return { points: [], index: -1 };
+    return [];
   }
 
-  const points = getDesignPointsForSelected();
-  let index = findExactDesignPointIndex(points, state.ratioValue);
+  return getDesignPointEntries(state.designPointsByImage, selected.name);
+}
 
-  if (index === -1) {
-    const resolved = resolveCropAtRatio(points, state.ratioValue, selected.width, selected.height).crop;
-    index = upsertDesignPoint(points, state.ratioValue, resolved);
+function ensureEditableDesignPointAtCurrentRatio() {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return null;
   }
 
-  return { points, index };
+  const points = getCurrentCropPoints();
+  const exactIndex = findExactDesignPointIndex(points, state.ratioValue);
+  if (exactIndex !== -1) {
+    return { points, exactIndex, changed: false };
+  }
+
+  const resolved = resolveCropAtRatio(points, state.ratioValue, selected.width, selected.height).crop;
+  const workingPoints = [...points];
+  const newIndex = upsertDesignPoint(workingPoints, state.ratioValue, resolved);
+  setDesignPointEntries(selected.name, workingPoints);
+  return { points: workingPoints, exactIndex: newIndex, changed: true };
+}
+
+function fitImageToCanvas(imgWidth, imgHeight, canvasWidth, canvasHeight) {
+  const imgRatio = imgWidth / imgHeight;
+  const canvasRatio = canvasWidth / canvasHeight;
+
+  let drawWidth;
+  let drawHeight;
+  let drawX;
+  let drawY;
+
+  if (imgRatio > canvasRatio) {
+    drawWidth = canvasWidth;
+    drawHeight = canvasWidth / imgRatio;
+    drawX = 0;
+    drawY = (canvasHeight - drawHeight) / 2;
+  } else {
+    drawHeight = canvasHeight;
+    drawWidth = canvasHeight * imgRatio;
+    drawX = (canvasWidth - drawWidth) / 2;
+    drawY = 0;
+  }
+
+  return { x: drawX, y: drawY, w: drawWidth, h: drawHeight };
 }
 
 function getCropRectInCanvas(crop, imageWidth, imageHeight, drawRect) {
@@ -316,30 +555,6 @@ function hitTestCorner(x, y, boxRect) {
   return null;
 }
 
-function fitImageToCanvas(imgWidth, imgHeight, canvasWidth, canvasHeight) {
-  const imgRatio = imgWidth / imgHeight;
-  const canvasRatio = canvasWidth / canvasHeight;
-
-  let drawWidth;
-  let drawHeight;
-  let drawX;
-  let drawY;
-
-  if (imgRatio > canvasRatio) {
-    drawWidth = canvasWidth;
-    drawHeight = canvasWidth / imgRatio;
-    drawX = 0;
-    drawY = (canvasHeight - drawHeight) / 2;
-  } else {
-    drawHeight = canvasHeight;
-    drawWidth = canvasHeight * imgRatio;
-    drawX = (canvasWidth - drawWidth) / 2;
-    drawY = 0;
-  }
-
-  return { x: drawX, y: drawY, w: drawWidth, h: drawHeight };
-}
-
 function resizeCanvasToDisplaySize() {
   const dpr = window.devicePixelRatio || 1;
   const rect = els.canvas.getBoundingClientRect();
@@ -354,19 +569,10 @@ function resizeCanvasToDisplaySize() {
   }
 }
 
-function snapRatioToNearbyPoint(ratio, points) {
-  const nearest = findNearestDesignPoint(points, ratio);
-  if (nearest.index !== -1 && nearest.distance <= state.snapThreshold) {
-    return points[nearest.index].ratio;
-  }
-
-  return ratio;
-}
-
 function updateSliderDecor(points, exactIndex) {
   els.designPointStrip.innerHTML = '';
 
-  points.forEach((point, index) => {
+  for (const [index, point] of points.entries()) {
     const dot = document.createElement('div');
     dot.className = `design-point-dot ${index === exactIndex ? 'active' : ''}`;
     const leftPercent = ((point.ratio - state.ratioMin) / (state.ratioMax - state.ratioMin)) * 100;
@@ -380,7 +586,7 @@ function updateSliderDecor(points, exactIndex) {
       draw();
     });
     els.designPointStrip.appendChild(dot);
-  });
+  }
 
   const onDesignPoint = exactIndex !== -1;
   els.aspectSlider.classList.toggle('on-design-point', onDesignPoint);
@@ -398,11 +604,19 @@ function updateMeta(crop) {
     return;
   }
 
-  els.selectedName.textContent = selected.name;
+  els.selectedName.textContent = selected.displayName || selected.name;
   els.selectedX.textContent = crop.x.toFixed(1);
   els.selectedY.textContent = crop.y.toFixed(1);
   els.aspectLabel.textContent = state.ratioValue.toFixed(3);
   els.centersJson.textContent = JSON.stringify(state.designPointsByImage, null, 2);
+}
+
+function updateSaveButtonState() {
+  const canSave = Boolean(state.folderHandle);
+  els.saveCropSettingsBtn.disabled = !canSave;
+  els.saveCropSettingsBtn.title = canSave
+    ? ''
+    : 'Select a folder first to enable saving crop settings.';
 }
 
 function renderThumbnails() {
@@ -420,7 +634,7 @@ function renderThumbnails() {
 
     const label = document.createElement('div');
     label.className = 'thumb-name';
-    label.textContent = img.name;
+    label.textContent = img.displayName || img.name;
 
     btn.appendChild(image);
     btn.appendChild(label);
@@ -431,45 +645,172 @@ function renderThumbnails() {
 
 function selectImage(index) {
   state.selectedIndex = index;
-  state.ratioValue = normalizeRatio(DEFAULT_DESIGN_RATIO);
+  state.ratioValue = DEFAULT_DESIGN_RATIO;
   els.aspectSlider.value = String(state.ratioValue);
   renderThumbnails();
   draw();
 }
 
-async function handleFolderSelection(event) {
-  const allFiles = Array.from(event.target.files || []);
-  const imageFiles = allFiles.filter(isSupportedImage);
+async function loadImagesFromRecords(imageRecords) {
+  const loaded = [];
+  for (const record of imageRecords) {
+    try {
+      loaded.push(await loadImageFromRecord(record));
+    } catch (error) {
+      console.warn(error);
+    }
+  }
+  return loaded;
+}
 
-  state.images.forEach((item) => URL.revokeObjectURL(item.url));
+function clearImageUrls() {
+  state.images.forEach((item) => {
+    if (typeof item.url === 'string' && item.url.startsWith('blob:')) {
+      URL.revokeObjectURL(item.url);
+    }
+  });
+}
 
-  state.images = [];
-  state.selectedIndex = -1;
-  state.designPointsByImage = {};
+async function loadFolderData(folderData, options = {}) {
+  const { persistRecentFolder = true } = options;
+  const { folderPath, folderName, imageRecords, cropsText } = folderData;
 
-  if (imageFiles.length === 0) {
-    renderThumbnails();
-    draw();
+  if (!Array.isArray(imageRecords) || imageRecords.length === 0) {
+    throw new Error('No PNG/JPG/JPEG images were found in the selected folder.');
+  }
+
+  let loadedDesignPoints = {};
+  let needsSave = false;
+
+  if (cropsText) {
+    try {
+      loadedDesignPoints = await parseCropsYamlText(cropsText);
+    } catch (error) {
+      const shouldDelete = window.confirm(
+        'Design point parse failed. Delete crops.yaml and open the folder anyway?'
+      );
+
+      if (!shouldDelete) {
+        throw error;
+      }
+
+      await deleteCropsFile(folderPath);
+      loadedDesignPoints = {};
+      needsSave = true;
+    }
+  } else {
+    needsSave = true;
+  }
+
+  clearImageUrls();
+  const loadedImages = await loadImagesFromRecords(imageRecords);
+
+  state.images = loadedImages;
+  state.selectedIndex = 0;
+  state.folderHandle = folderPath;
+  state.folderName = folderName;
+  state.designPointsByImage = loadedDesignPoints;
+  updateSaveButtonState();
+
+  const changedImages = new Set();
+  ensureDesignPointsForLoadedImages(changedImages);
+  if (changedImages.size > 0) {
+    needsSave = true;
+  }
+
+  renderThumbnails();
+  selectImage(0);
+
+  if (persistRecentFolder) {
+    void saveLastFolderCache(folderPath, folderName);
+  }
+
+  if (needsSave) {
+    void autoSaveCropSettings();
+  }
+}
+
+async function chooseFolder() {
+  const folderData = await requestFolderSelection();
+  if (!folderData) {
     return;
   }
 
-  const loaded = [];
-  for (const file of imageFiles.sort((a, b) => a.name.localeCompare(b.name))) {
-    try {
-      loaded.push(await loadImageFromFile(file));
-    } catch (err) {
-      console.warn(err);
+  await loadFolderData(folderData);
+}
+
+function snapRatioToNearbyPoint(ratio, points) {
+  const nearest = findNearestDesignPoint(points, ratio);
+  if (nearest.index !== -1 && nearest.distance <= state.snapThreshold) {
+    return points[nearest.index].ratio;
+  }
+
+  return ratio;
+}
+
+function jumpToAdjacentDesignPoint(direction) {
+  const points = getCurrentCropPoints();
+  if (points.length === 0) {
+    return;
+  }
+
+  let targetRatio = state.ratioValue;
+  if (direction > 0) {
+    for (const point of points) {
+      if (point.ratio > state.ratioValue + RATIO_EPSILON) {
+        targetRatio = point.ratio;
+        break;
+      }
+    }
+  } else {
+    for (let i = points.length - 1; i >= 0; i -= 1) {
+      if (points[i].ratio < state.ratioValue - RATIO_EPSILON) {
+        targetRatio = points[i].ratio;
+        break;
+      }
     }
   }
 
-  state.images = loaded;
-  renderThumbnails();
+  state.ratioValue = clamp(targetRatio, state.ratioMin, state.ratioMax);
+  els.aspectSlider.value = String(state.ratioValue);
+  draw();
+}
 
-  if (state.images.length > 0) {
-    selectImage(0);
-  } else {
-    draw();
+function removeCurrentDesignPoint() {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return;
   }
+
+  const points = getCurrentCropPoints();
+  if (points.length <= 1) {
+    return;
+  }
+
+  const exactIndex = findExactDesignPointIndex(points, state.ratioValue);
+  if (exactIndex === -1) {
+    return;
+  }
+
+  points.splice(exactIndex, 1);
+  setDesignPointEntries(selected.name, points);
+
+  const nearest = findNearestDesignPoint(points, state.ratioValue);
+  if (nearest.index !== -1) {
+    state.ratioValue = points[nearest.index].ratio;
+    els.aspectSlider.value = String(state.ratioValue);
+  }
+
+  draw();
+  void autoSaveCropSettings();
+}
+
+function persistCurrentDesignPoints() {
+  if (!state.folderHandle) {
+    return;
+  }
+
+  void autoSaveCropSettings();
 }
 
 function draw() {
@@ -490,7 +831,7 @@ function draw() {
 
   els.emptyState.style.display = 'none';
 
-  const points = getDesignPointsForSelected();
+  const points = getCurrentCropPoints();
   const resolved = resolveCropAtRatio(points, state.ratioValue, selected.width, selected.height);
   const crop = resolved.crop;
   const exactIndex = resolved.exactIndex;
@@ -576,8 +917,10 @@ function onCanvasPointerDown(event) {
     return;
   }
 
-  ensureEditablePointAtCurrentRatio();
-  draw();
+  const editable = ensureEditableDesignPointAtCurrentRatio();
+  if (editable && editable.changed) {
+    draw();
+  }
 
   state.drag.active = true;
   state.drag.mode = corner ? 'resize' : 'move';
@@ -597,7 +940,7 @@ function onCanvasPointerMove(event) {
     return;
   }
 
-  const points = getDesignPointsForSelected();
+  const points = getCurrentCropPoints();
   const editableIndex = findExactDesignPointIndex(points, state.ratioValue);
   if (editableIndex === -1) {
     return;
@@ -616,11 +959,10 @@ function onCanvasPointerMove(event) {
   state.drag.lastY = y;
 
   if (state.drag.mode === 'move') {
-    const crop = makeCropFromDesignPoint(point, state.ratioValue);
+    const crop = { x: point.x, y: point.y, w: point.scale, h: point.scale / state.ratioValue };
     crop.x += (dx / state.renderCache.drawRect.w) * selected.width;
     crop.y += (dy / state.renderCache.drawRect.h) * selected.height;
-    clampCenterToFit(crop, selected.width, selected.height);
-
+    clampCropToImage(crop, selected.width, selected.height, state.ratioValue);
     point.x = crop.x;
     point.y = crop.y;
   } else if (state.drag.mode === 'resize') {
@@ -638,81 +980,27 @@ function onCanvasPointerMove(event) {
       h: Math.max(4, (halfW * 2) / state.ratioValue)
     };
 
-    clampScaleToFitAtCenter(trial, selected.width, selected.height, state.ratioValue);
+    clampCropToImage(trial, selected.width, selected.height, state.ratioValue);
     point.scale = trial.w;
   }
 
+  setDesignPointEntries(selected.name, points);
   draw();
+  persistCurrentDesignPoints();
 }
 
-function onCanvasPointerUp(event) {
+function onCanvasPointerUp() {
   if (!state.drag.active) {
     return;
   }
 
   state.drag.active = false;
-  if (state.drag.pointerId !== null) {
-    els.canvas.releasePointerCapture(state.drag.pointerId);
-  }
-
   state.drag.mode = null;
   state.drag.pointerId = null;
 }
 
-function jumpToAdjacentDesignPoint(direction) {
-  const points = getDesignPointsForSelected();
-  if (points.length === 0) {
-    return;
-  }
-
-  let targetRatio = state.ratioValue;
-  if (direction > 0) {
-    for (const point of points) {
-      if (point.ratio > state.ratioValue + RATIO_EPSILON) {
-        targetRatio = point.ratio;
-        break;
-      }
-    }
-  } else {
-    for (let i = points.length - 1; i >= 0; i -= 1) {
-      if (points[i].ratio < state.ratioValue - RATIO_EPSILON) {
-        targetRatio = points[i].ratio;
-        break;
-      }
-    }
-  }
-
-  state.ratioValue = normalizeRatio(targetRatio);
-  els.aspectSlider.value = String(state.ratioValue);
-  draw();
-}
-
-function removeCurrentDesignPoint() {
-  const points = getDesignPointsForSelected();
-  if (points.length <= 1) {
-    return;
-  }
-
-  const exactIndex = findExactDesignPointIndex(points, state.ratioValue);
-  if (exactIndex === -1) {
-    return;
-  }
-
-  points.splice(exactIndex, 1);
-  sortDesignPoints(points);
-
-  const nearest = findNearestDesignPoint(points, state.ratioValue);
-  if (nearest.index !== -1) {
-    state.ratioValue = points[nearest.index].ratio;
-    els.aspectSlider.value = String(state.ratioValue);
-  }
-
-  draw();
-}
-
-function setupEvents() {
-  els.pickFolderBtn.addEventListener('click', () => els.folderInput.click());
-  els.folderInput.addEventListener('change', handleFolderSelection);
+function wireEvents() {
+  els.pickFolderBtn.addEventListener('click', chooseFolder);
 
   els.thumbLeft.addEventListener('click', () => {
     els.thumbStrip.scrollBy({ left: -300, behavior: 'smooth' });
@@ -726,16 +1014,12 @@ function setupEvents() {
   els.aspectSlider.max = String(state.ratioMax);
   els.aspectSlider.step = String(state.ratioStep);
   els.aspectSlider.value = String(state.ratioValue);
+  els.aspectLabel.textContent = state.ratioValue.toFixed(3);
 
   els.aspectSlider.addEventListener('input', (event) => {
-    const selected = getSelectedImage();
-    let nextRatio = normalizeRatio(Number(event.target.value));
-
-    if (selected) {
-      const points = getDesignPointsForSelected();
-      nextRatio = snapRatioToNearbyPoint(nextRatio, points);
-    }
-
+    let nextRatio = clamp(Number(event.target.value), state.ratioMin, state.ratioMax);
+    const points = getCurrentCropPoints();
+    nextRatio = snapRatioToNearbyPoint(nextRatio, points);
     state.ratioValue = nextRatio;
     els.aspectSlider.value = String(state.ratioValue);
     draw();
@@ -760,7 +1044,7 @@ function setupEvents() {
       return;
     }
 
-    const points = getDesignPointsForSelected();
+    const points = getCurrentCropPoints();
     if (points.length === 0) {
       return;
     }
@@ -773,6 +1057,7 @@ function setupEvents() {
   });
 
   els.removeDesignPointBtn.addEventListener('click', removeCurrentDesignPoint);
+  els.saveCropSettingsBtn.addEventListener('click', saveCurrentCropSettingsWithFeedback);
 
   els.canvas.addEventListener('pointerdown', onCanvasPointerDown);
   els.canvas.addEventListener('pointermove', onCanvasPointerMove);
@@ -781,25 +1066,28 @@ function setupEvents() {
   els.canvas.addEventListener('pointerleave', onCanvasPointerUp);
 
   window.addEventListener('resize', draw);
-
-  els.copyJsonBtn.addEventListener('click', async () => {
-    const text = JSON.stringify(state.designPointsByImage, null, 2);
-
-    try {
-      await navigator.clipboard.writeText(text);
-      els.copyJsonBtn.textContent = 'Copied';
-      setTimeout(() => {
-        els.copyJsonBtn.textContent = 'Copy Design Points JSON';
-      }, 900);
-    } catch (err) {
-      console.warn('Clipboard copy failed', err);
-      els.copyJsonBtn.textContent = 'Copy failed';
-      setTimeout(() => {
-        els.copyJsonBtn.textContent = 'Copy Design Points JSON';
-      }, 1100);
-    }
-  });
 }
 
-setupEvents();
-draw();
+async function restoreLastFolderIfAvailable() {
+  try {
+    const cache = await fetchLastFolderCache();
+    if (!cache || !cache.folderPath) {
+      return;
+    }
+
+    const folderData = await fetchFolderData(cache.folderPath);
+    await loadFolderData(folderData, { persistRecentFolder: false });
+  } catch (error) {
+    console.warn(error);
+  }
+}
+
+async function initialize() {
+  wireEvents();
+  els.saveCropSettingsBtn.textContent = 'Save crop settings';
+  updateSaveButtonState();
+  await restoreLastFolderIfAvailable();
+  draw();
+}
+
+initialize();

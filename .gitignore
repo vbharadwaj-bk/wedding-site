@@ -15,3 +15,8 @@ highres_slides/
 # Keep font binaries out of git
 fonts/**
 !fonts/.gitkeep
+
+# Croptool local cache
+croptool/.croptool-cache/
+!croptool/.croptool-cache/.gitkeep
+croptool/node_modules/
