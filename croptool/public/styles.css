@@ -92,6 +92,13 @@ body {
   transform: translateY(-1px);
 }
 
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
 .btn-secondary {
   background: #f2e2c6;
   color: #3b281e;

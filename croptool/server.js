@@ -24,6 +24,23 @@ const MIME_TYPES = {
 
 const fsp = fs.promises;
 
+function openBrowser(url) {
+  const platform = process.platform;
+  const command = platform === 'darwin' ? 'open' : (platform === 'win32' ? 'cmd' : 'xdg-open');
+  const args = platform === 'win32' ? ['/c', 'start', '', url] : [url];
+
+  const child = spawn(command, args, {
+    detached: true,
+    stdio: 'ignore'
+  });
+
+  child.on('error', (err) => {
+    console.warn(`Unable to open browser automatically: ${err.message}`);
+  });
+
+  child.unref();
+}
+
 function sendFile(res, filePath) {
   const ext = path.extname(filePath).toLowerCase();
   const contentType = MIME_TYPES[ext] || 'application/octet-stream';
@@ -515,6 +532,7 @@ function startServer(port) {
 
   server.listen(port, () => {
     console.log(`Croptool running at http://localhost:${port}`);
+    openBrowser(`http://localhost:${port}`);
   });
 }
 

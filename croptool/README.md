@@ -30,6 +30,8 @@ Then open this URL in your browser:
 
 http://localhost:4173
 
+The app will also try to open that URL automatically when `npm start` succeeds.
+
 ## Usage
 
 1. Click **Select Folder**.

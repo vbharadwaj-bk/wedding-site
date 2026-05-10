@@ -2,24 +2,18 @@
 const CROP_DESIGN_POINTS = {
   "after_proposal.JPG": [
     {
-      "aspectRatio": 1.227,
-      "x": 768.071,
-      "y": 903.74,
-      "scale": 1529.695
-    },
-    {
-      "aspectRatio": 1.778,
-      "x": 768.071,
-      "y": 639.451,
-      "scale": 1529.695
+      "aspectRatio": 0.75,
+      "x": 768,
+      "y": 1024,
+      "scale": 1536
     }
   ],
   "birds.jpeg": [
     {
-      "aspectRatio": 1.778,
-      "x": 489.111,
-      "y": 366.022,
-      "scale": 949.62
+      "aspectRatio": 1.3333333333333333,
+      "x": 512,
+      "y": 384,
+      "scale": 1024
     }
   ],
   "engaged.jpeg": [
@@ -41,9 +35,9 @@ const CROP_DESIGN_POINTS = {
   "garden_gate.jpg": [
     {
       "aspectRatio": 1.778,
-      "x": 1779,
-      "y": 2668.5,
-      "scale": 2490.6
+      "x": 1781.799,
+      "y": 2651.186,
+      "scale": 3500.873
     }
   ],
   "hands_on_face.jpeg": [
@@ -64,18 +58,42 @@ const CROP_DESIGN_POINTS = {
   ],
   "on_bridge.jpg": [
     {
+      "aspectRatio": 0.4,
+      "x": 1323.62,
+      "y": 2008.749,
+      "scale": 1587.401
+    },
+    {
+      "aspectRatio": 0.636,
+      "x": 1311.437,
+      "y": 2230.729,
+      "scale": 2059.263
+    },
+    {
       "aspectRatio": 1.778,
-      "x": 1331,
-      "y": 1996.5,
-      "scale": 1863.4
+      "x": 1322.518,
+      "y": 1618.918,
+      "scale": 2632.787
     }
   ],
   "redwood_grove_center.jpg": [
     {
+      "aspectRatio": 0.801,
+      "x": 1490.372,
+      "y": 3629.114,
+      "scale": 1699.812
+    },
+    {
+      "aspectRatio": 1.238,
+      "x": 1517.04,
+      "y": 3378.58,
+      "scale": 2513.301
+    },
+    {
       "aspectRatio": 1.778,
-      "x": 1551.5,
-      "y": 2327.5,
-      "scale": 2172.1
+      "x": 1547.676,
+      "y": 3376.484,
+      "scale": 3088.045
     }
   ],
   "shyamala_rice.jpeg": [

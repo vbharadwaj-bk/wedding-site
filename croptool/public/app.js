@@ -37,6 +37,7 @@ const els = {
   designPointStrip: document.getElementById('design-point-strip'),
   aspectLabel: document.getElementById('aspect-label'),
   removeDesignPointBtn: document.getElementById('remove-design-point-btn'),
+  resetDesignPointsBtn: document.getElementById('reset-design-points-btn'),
   saveCropSettingsBtn: document.getElementById('save-crop-settings-btn'),
   selectedName: document.getElementById('selected-name'),
   selectedX: document.getElementById('selected-x'),
@@ -98,31 +99,20 @@ function loadImageFromRecord(record) {
   });
 }
 
-function makeDefaultCrop(imageWidth, imageHeight, ratioValue) {
-  const maxCoverage = 0.7;
-  const maxW = imageWidth * maxCoverage;
-  const maxH = imageHeight * maxCoverage;
-
-  let boxW = maxW;
-  let boxH = boxW / ratioValue;
-
-  if (boxH > maxH) {
-    boxH = maxH;
-    boxW = boxH * ratioValue;
-  }
-
+function makeDefaultCrop(imageWidth, imageHeight) {
   return {
     x: imageWidth / 2,
     y: imageHeight / 2,
-    w: boxW,
-    h: boxH
+    w: imageWidth,
+    h: imageHeight
   };
 }
 
 function makeDefaultDesignPoint(image) {
-  const crop = makeDefaultCrop(image.width, image.height, DEFAULT_DESIGN_RATIO);
+  const crop = makeDefaultCrop(image.width, image.height);
+  const aspectRatio = image.width / image.height;
   return {
-    aspectRatio: DEFAULT_DESIGN_RATIO,
+    aspectRatio,
     x: crop.x,
     y: crop.y,
     scale: crop.w
@@ -507,7 +497,7 @@ function clampCropToImage(crop, imageWidth, imageHeight, ratioValue) {
 
 function resolveCropAtRatio(points, ratio, imageWidth, imageHeight) {
   if (points.length === 0) {
-    const fallback = makeDefaultCrop(imageWidth, imageHeight, ratio);
+    const fallback = makeDefaultCrop(imageWidth, imageHeight);
     return { crop: fallback, exactIndex: -1 };
   }
 
@@ -679,11 +669,16 @@ function resizeCanvasToDisplaySize() {
 function updateSliderDecor(points, exactIndex) {
   els.designPointStrip.innerHTML = '';
 
+  // compute pixel-aligned positions so dots align with the native range thumb
+  const sliderRect = els.aspectSlider.getBoundingClientRect();
+  const sliderWidth = Math.max(1, els.aspectSlider.clientWidth);
+
   for (const [index, point] of points.entries()) {
     const dot = document.createElement('div');
     dot.className = `design-point-dot ${index === exactIndex ? 'active' : ''}`;
-    const leftPercent = ((point.aspectRatio - state.ratioMin) / (state.ratioMax - state.ratioMin)) * 100;
-    dot.style.left = `${clamp(leftPercent, 0, 100)}%`;
+    const ratioPct = (point.aspectRatio - state.ratioMin) / (state.ratioMax - state.ratioMin);
+    const leftPx = clamp(ratioPct * sliderWidth, 0, sliderWidth);
+    dot.style.left = `${leftPx}px`;
     dot.title = `Aspect ${point.aspectRatio.toFixed(3)}`;
     dot.addEventListener('click', (event) => {
       event.preventDefault();
@@ -755,7 +750,9 @@ function renderThumbnails() {
 
 function selectImage(index) {
   state.selectedIndex = index;
-  state.ratioValue = DEFAULT_DESIGN_RATIO;
+  const selected = getSelectedImage();
+  const points = selected ? getDesignPointEntries(state.designPointsByImage, selected.name) : [];
+  state.ratioValue = points[0]?.aspectRatio || (selected ? selected.width / selected.height : DEFAULT_DESIGN_RATIO);
   els.aspectSlider.value = String(state.ratioValue);
   renderThumbnails();
   draw();
@@ -911,6 +908,49 @@ function removeCurrentDesignPoint() {
     els.aspectSlider.value = String(state.ratioValue);
   }
 
+  draw();
+  void autoSaveCropSettings();
+}
+
+function centerCurrentDesignPoint(axis) {
+  const selected = getSelectedImage();
+  if (!selected) {
+    return;
+  }
+
+  const editable = ensureEditableDesignPointAtCurrentRatio();
+  if (!editable) {
+    return;
+  }
+
+  const points = editable.points;
+  const exactIndex = editable.exactIndex;
+  if (exactIndex === -1) {
+    return;
+  }
+
+  const point = points[exactIndex];
+  const crop = {
+    x: point.x,
+    y: point.y,
+    w: point.scale,
+    h: point.scale / state.ratioValue
+  };
+
+  if (axis === 'x') {
+    crop.x = selected.width / 2;
+  } else if (axis === 'y') {
+    crop.y = selected.height / 2;
+  } else {
+    return;
+  }
+
+  clampCropToImage(crop, selected.width, selected.height, state.ratioValue);
+  point.x = crop.x;
+  point.y = crop.y;
+  point.scale = crop.w;
+
+  setDesignPointEntries(selected.name, points);
   draw();
   void autoSaveCropSettings();
 }
@@ -1075,6 +1115,7 @@ function onCanvasPointerMove(event) {
     clampCropToImage(crop, selected.width, selected.height, state.ratioValue);
     point.x = crop.x;
     point.y = crop.y;
+    point.scale = crop.w;
   } else if (state.drag.mode === 'resize') {
     const pointerImageX = ((x - state.renderCache.drawRect.x) / state.renderCache.drawRect.w) * selected.width;
     const pointerImageY = ((y - state.renderCache.drawRect.y) / state.renderCache.drawRect.h) * selected.height;
@@ -1164,6 +1205,29 @@ function wireEvents() {
   });
 
   els.removeDesignPointBtn.addEventListener('click', removeCurrentDesignPoint);
+  if (els.resetDesignPointsBtn) {
+    els.resetDesignPointsBtn.addEventListener('click', () => {
+      const selected = getSelectedImage();
+      if (!selected) return;
+
+      if (!window.confirm(`Reset design points for ${selected.displayName || selected.name} to defaults?`)) {
+        return;
+      }
+
+      const defaultPoint = makeDefaultDesignPoint(selected);
+      setDesignPointEntries(selected.name, [defaultPoint]);
+      draw();
+      void autoSaveCropSettings();
+    });
+  }
+  const centerXBtn = document.getElementById('center-horizontal-btn');
+  const centerYBtn = document.getElementById('center-vertical-btn');
+  if (centerXBtn) {
+    centerXBtn.addEventListener('click', () => centerCurrentDesignPoint('x'));
+  }
+  if (centerYBtn) {
+    centerYBtn.addEventListener('click', () => centerCurrentDesignPoint('y'));
+  }
   els.saveCropSettingsBtn.addEventListener('click', saveCurrentCropSettingsWithFeedback);
 
   els.canvas.addEventListener('pointerdown', onCanvasPointerDown);
