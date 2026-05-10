@@ -27,9 +27,9 @@ images:
       y: 1536
       scale: 4080
     - aspectRatio: 1.992
-      x: 2007.235
-      y: 1030.053
-      scale: 3992.394
+      x: 2040
+      y: 987.93
+      scale: 3935.912
   'engagement_ask.jpeg':
     - aspectRatio: 0.434
       x: 613.402

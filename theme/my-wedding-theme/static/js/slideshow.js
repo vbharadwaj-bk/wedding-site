@@ -672,10 +672,51 @@
   detailsPane?.addEventListener("scroll", queuePaneSync, { passive: true });
   mainScroller?.addEventListener("scroll", queuePaneSync, { passive: true });
   window.addEventListener("scroll", queuePaneSync, { passive: true });
+  let resizeThrottleTimer = null;
+  let isPinching = false;
+  let pinchingClearTimer = null;
+
+  const onPinchStart = (ev) => {
+    if (!ev.touches || ev.touches.length < 2) return;
+    isPinching = true;
+    if (pinchingClearTimer) {
+      clearTimeout(pinchingClearTimer);
+      pinchingClearTimer = null;
+    }
+  };
+
+  const onPinchEnd = (ev) => {
+    // if fewer than 2 touches remain, schedule clearing the pinching state
+    const remaining = ev.touches ? ev.touches.length : 0;
+    if (remaining >= 2) return;
+
+    if (pinchingClearTimer) clearTimeout(pinchingClearTimer);
+    // wait a little to allow the zoom gesture to settle
+    pinchingClearTimer = setTimeout(() => {
+      isPinching = false;
+      pinchingClearTimer = null;
+      // run a final update once the pinch/zoom has finished
+      queuePaneSync();
+      queueDynamicCropUpdate();
+    }, 350);
+  };
+
+  // Touch events to detect pinch-to-zoom on touch devices (iOS Safari)
+  window.addEventListener("touchstart", onPinchStart, { passive: true });
+  window.addEventListener("touchmove", onPinchStart, { passive: true });
+  window.addEventListener("touchend", onPinchEnd, { passive: true });
+  window.addEventListener("touchcancel", onPinchEnd, { passive: true });
+
   window.addEventListener("resize", () => {
-    queuePaneSync();
-    queueDynamicCropUpdate();
-  });
+    // ignore intermediate resize events while a pinch gesture is active
+    if (isPinching) return;
+
+    clearTimeout(resizeThrottleTimer);
+    resizeThrottleTimer = setTimeout(() => {
+      queuePaneSync();
+      queueDynamicCropUpdate();
+    }, 300);
+  }, { passive: true });
 
   const initMiniSlideshows = () => {
     const miniSliders = Array.from(root.querySelectorAll("[data-mini-slideshow]"));
