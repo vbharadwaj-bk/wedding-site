@@ -263,14 +263,28 @@
   };
 
   let cropUpdateQueued = false;
-  const visualViewport = window.visualViewport || null;
 
-  const isViewportZoomed = () => {
-    if (!visualViewport || !Number.isFinite(visualViewport.scale)) {
-      return false;
-    }
+  const isTouchDevice = () => {
+    return (
+      typeof window === "object" &&
+      ("ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0)
+    );
+  };
 
-    return visualViewport.scale > 1.01;
+  const isLayoutViewportZoomedOnTouch = () => {
+    if (!isTouchDevice()) return false;
+
+    const layoutW = document.documentElement.clientWidth || 0;
+    const layoutH = document.documentElement.clientHeight || 0;
+    const screenW = window.screen.width || 0;
+    const screenH = window.screen.height || 0;
+
+    // If layout viewport is noticeably smaller than the physical screen,
+    // the page is likely zoomed (pinch-to-zoom). Use a tolerance.
+    const TOLERANCE = 0.95;
+    if (screenW > 0 && layoutW > 0 && layoutW < screenW * TOLERANCE) return true;
+    if (screenH > 0 && layoutH > 0 && layoutH < screenH * TOLERANCE) return true;
+    return false;
   };
 
   const queueDynamicCropUpdate = () => {
@@ -278,7 +292,7 @@
       return;
     }
 
-    if (isViewportZoomed()) {
+    if (isLayoutViewportZoomedOnTouch()) {
       return;
     }
 
@@ -286,7 +300,7 @@
     window.requestAnimationFrame(() => {
       cropUpdateQueued = false;
 
-      if (isViewportZoomed()) {
+      if (isLayoutViewportZoomedOnTouch()) {
         return;
       }
 
@@ -693,14 +707,14 @@
   let resizeThrottleTimer = null;
 
   window.addEventListener("resize", () => {
-    if (isViewportZoomed()) {
+    if (isLayoutViewportZoomedOnTouch()) {
       clearTimeout(resizeThrottleTimer);
       return;
     }
 
     clearTimeout(resizeThrottleTimer);
     resizeThrottleTimer = setTimeout(() => {
-      if (isViewportZoomed()) {
+      if (isLayoutViewportZoomedOnTouch()) {
         return;
       }
 
