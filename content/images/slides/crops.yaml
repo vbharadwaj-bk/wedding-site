@@ -102,9 +102,9 @@ images:
       y: 2328.937
       scale: 3052.868
     - aspectRatio: 2.4
-      x: 1526.434
-      y: 2054.86
-      scale: 3052.868
+      x: 1536
+      y: 2179.685
+      scale: 3072
   'tree_walk.jpg':
     - aspectRatio: 0.667
       x: 1824

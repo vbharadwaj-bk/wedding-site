@@ -44,8 +44,8 @@ const CROP_DESIGN_POINTS = {
     {
       "aspectRatio": 1.992,
       "x": 2040,
-      "y": 987.9298168604654,
-      "scale": 3935.9123903720943
+      "y": 987.93,
+      "scale": 3935.912
     }
   ],
   "engagement_ask.jpeg": [
@@ -159,9 +159,9 @@ const CROP_DESIGN_POINTS = {
     },
     {
       "aspectRatio": 2.4,
-      "x": 1526.434,
-      "y": 2054.86,
-      "scale": 3052.868
+      "x": 1536,
+      "y": 2179.6851748251747,
+      "scale": 3072
     }
   ],
   "tree_walk.jpg": [

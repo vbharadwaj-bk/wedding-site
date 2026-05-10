@@ -538,7 +538,6 @@ h3 {
   z-index: 1;
   pointer-events: none;
   transition: opacity 900ms ease-in-out;
-  will-change: opacity;
 }
 
 .slide.is-active {

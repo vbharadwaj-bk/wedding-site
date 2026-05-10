@@ -272,18 +272,21 @@
   };
 
   const isLayoutViewportZoomedOnTouch = () => {
-    if (!isTouchDevice()) return false;
+  if (!isTouchDevice()) return false;
+    // 1. The modern, highly reliable way to check for pinch-zoom (iOS 13+, Android)
+    if (window.visualViewport) {
+      // We use a tiny tolerance because floating point math can sometimes return 1.00001
+      return window.visualViewport.scale > 1.01 || window.visualViewport.scale < 0.99;
+    }
 
+    // 2. Legacy fallback for very old mobile browsers
     const layoutW = document.documentElement.clientWidth || 0;
-    const layoutH = document.documentElement.clientHeight || 0;
-    const screenW = window.screen.width || 0;
-    const screenH = window.screen.height || 0;
-
-    // If layout viewport is noticeably smaller than the physical screen,
-    // the page is likely zoomed (pinch-to-zoom). Use a tolerance.
+    const visualW = window.innerWidth || 0; 
+    
+    // innerWidth typically represents the visual viewport on older mobile browsers
     const TOLERANCE = 0.95;
-    if (screenW > 0 && layoutW > 0 && layoutW < screenW * TOLERANCE) return true;
-    if (screenH > 0 && layoutH > 0 && layoutH < screenH * TOLERANCE) return true;
+    if (visualW > 0 && layoutW > 0 && visualW < layoutW * TOLERANCE) return true;
+    
     return false;
   };
 
