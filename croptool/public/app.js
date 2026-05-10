@@ -669,16 +669,19 @@ function resizeCanvasToDisplaySize() {
 function updateSliderDecor(points, exactIndex) {
   els.designPointStrip.innerHTML = '';
 
-  // compute pixel-aligned positions so dots align with the native range thumb
-  const sliderRect = els.aspectSlider.getBoundingClientRect();
   const sliderWidth = Math.max(1, els.aspectSlider.clientWidth);
+  const trackInset = 2;
 
   for (const [index, point] of points.entries()) {
     const dot = document.createElement('div');
     dot.className = `design-point-dot ${index === exactIndex ? 'active' : ''}`;
+    const dotSize = index === exactIndex ? 10 : 8;
     const ratioPct = (point.aspectRatio - state.ratioMin) / (state.ratioMax - state.ratioMin);
-    const leftPx = clamp(ratioPct * sliderWidth, 0, sliderWidth);
+    const centerPx = clamp(trackInset + ratioPct * Math.max(0, sliderWidth - trackInset * 2), 0, sliderWidth);
+    const leftPx = clamp(centerPx - dotSize / 2, 0, sliderWidth - dotSize);
     dot.style.left = `${leftPx}px`;
+    dot.style.width = `${dotSize}px`;
+    dot.style.height = `${dotSize}px`;
     dot.title = `Aspect ${point.aspectRatio.toFixed(3)}`;
     dot.addEventListener('click', (event) => {
       event.preventDefault();
@@ -1216,6 +1219,8 @@ function wireEvents() {
 
       const defaultPoint = makeDefaultDesignPoint(selected);
       setDesignPointEntries(selected.name, [defaultPoint]);
+      state.ratioValue = defaultPoint.aspectRatio;
+      els.aspectSlider.value = String(state.ratioValue);
       draw();
       void autoSaveCropSettings();
     });

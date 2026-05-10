@@ -4,74 +4,126 @@ images:
       x: 768
       y: 1024
       scale: 1536
+    - aspectRatio: 1.332
+      x: 768
+      y: 897.342
+      scale: 1536
   'birds.jpeg':
+    - aspectRatio: 0.66
+      x: 368.14
+      y: 385.625
+      scale: 501.197
     - aspectRatio: 1.333
       x: 512
       y: 384
       scale: 1024
   'engaged.jpeg':
-    - aspectRatio: 1.778
+    - aspectRatio: 0.589
+      x: 1833.933
+      y: 1536
+      scale: 1809.408
+    - aspectRatio: 1.328
       x: 2040
       y: 1536
-      scale: 2856
+      scale: 4080
+    - aspectRatio: 1.992
+      x: 2007.235
+      y: 1030.053
+      scale: 3992.394
   'engagement_ask.jpeg':
-    - aspectRatio: 1.778
+    - aspectRatio: 0.434
+      x: 613.402
+      y: 332.487
+      scale: 287.647
+    - aspectRatio: 1.777
       x: 591
       y: 332.5
-      scale: 827.4
+      scale: 1182
   'garden_gate.jpg':
-    - aspectRatio: 1.778
-      x: 1781.799
-      y: 2651.186
-      scale: 3500.873
+    - aspectRatio: 0.667
+      x: 1779
+      y: 2668.5
+      scale: 3558
   'hands_on_face.jpeg':
-    - aspectRatio: 1.778
+    - aspectRatio: 0.667
       x: 1606.5
       y: 2409.5
-      scale: 2249.1
+      scale: 3213
+    - aspectRatio: 1.594
+      x: 1606.5
+      y: 2941.804
+      scale: 3206.419
   'malini_rice.jpeg':
-    - aspectRatio: 1.778
+    - aspectRatio: 0.753
       x: 1536
       y: 2040
-      scale: 2150.4
+      scale: 3072
+    - aspectRatio: 1.467
+      x: 1528.459
+      y: 2387.283
+      scale: 3056.919
+    - aspectRatio: 2.059
+      x: 1522.208
+      y: 2259.814
+      scale: 3044.416
   'on_bridge.jpg':
-    - aspectRatio: 0.4
-      x: 1323.62
-      y: 2008.749
-      scale: 1587.401
-    - aspectRatio: 0.636
-      x: 1311.437
-      y: 2230.729
-      scale: 2059.263
-    - aspectRatio: 1.778
-      x: 1322.518
-      y: 1618.918
-      scale: 2632.787
+    - aspectRatio: 0.667
+      x: 1331
+      y: 1996.5
+      scale: 2662
+    - aspectRatio: 1.208
+      x: 1329.478
+      y: 1768.761
+      scale: 2658.955
+    - aspectRatio: 2.4
+      x: 1329.659
+      y: 1493.348
+      scale: 2658.728
   'redwood_grove_center.jpg':
-    - aspectRatio: 0.801
-      x: 1490.372
-      y: 3629.114
-      scale: 1699.812
-    - aspectRatio: 1.238
-      x: 1517.04
-      y: 3378.58
-      scale: 2513.301
-    - aspectRatio: 1.778
-      x: 1547.676
-      y: 3376.484
-      scale: 3088.045
+    - aspectRatio: 0.667
+      x: 1511.26
+      y: 3782.426
+      scale: 1163.307
+    - aspectRatio: 1.225
+      x: 1551.5
+      y: 3383.776
+      scale: 3103
+    - aspectRatio: 2.082
+      x: 1551.5
+      y: 3612.22
+      scale: 3103
   'shyamala_rice.jpeg':
-    - aspectRatio: 1.778
+    - aspectRatio: 0.753
       x: 1536
       y: 2040
-      scale: 2150.4
+      scale: 3072
+    - aspectRatio: 1.6
+      x: 1526.434
+      y: 2328.937
+      scale: 3052.868
+    - aspectRatio: 2.4
+      x: 1526.434
+      y: 2054.86
+      scale: 3052.868
   'tree_walk.jpg':
-    - aspectRatio: 1.778
+    - aspectRatio: 0.667
       x: 1824
       y: 2736
-      scale: 2553.6
+      scale: 3648
+    - aspectRatio: 1.41
+      x: 1822.692
+      y: 3712.698
+      scale: 3634.236
+    - aspectRatio: 2.4
+      x: 1826.522
+      y: 3160.293
+      scale: 3634.236
   'with_family.jpeg':
-    - aspectRatio: 1.778
+    - aspectRatio: 1.159
       x: 1780.5
       y: 1536
-      scale: 2492.7
+      scale: 3561
+    - aspectRatio: 2.4
+      x: 1781.636
+      y: 1283.133
+      scale: 3558.727
