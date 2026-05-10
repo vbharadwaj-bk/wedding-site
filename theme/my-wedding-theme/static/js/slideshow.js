@@ -672,7 +672,10 @@
   detailsPane?.addEventListener("scroll", queuePaneSync, { passive: true });
   mainScroller?.addEventListener("scroll", queuePaneSync, { passive: true });
   window.addEventListener("scroll", queuePaneSync, { passive: true });
-  window.addEventListener("resize", queuePaneSync);
+  window.addEventListener("resize", () => {
+    queuePaneSync();
+    queueDynamicCropUpdate();
+  });
 
   const initMiniSlideshows = () => {
     const miniSliders = Array.from(root.querySelectorAll("[data-mini-slideshow]"));

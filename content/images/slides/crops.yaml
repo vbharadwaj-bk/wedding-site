@@ -81,17 +81,17 @@ images:
       scale: 2658.728
   'redwood_grove_center.jpg':
     - aspectRatio: 0.667
-      x: 1511.26
-      y: 3782.426
-      scale: 1163.307
+      x: 1516.373
+      y: 3376.206
+      scale: 1546.098
     - aspectRatio: 1.225
-      x: 1551.5
-      y: 3383.776
-      scale: 3103
+      x: 1528.585
+      y: 3124.241
+      scale: 3054.309
     - aspectRatio: 2.082
-      x: 1551.5
-      y: 3612.22
-      scale: 3103
+      x: 1543.208
+      y: 3553.065
+      scale: 3086.416
   'shyamala_rice.jpeg':
     - aspectRatio: 0.753
       x: 1536
