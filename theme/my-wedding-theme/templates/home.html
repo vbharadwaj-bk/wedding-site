@@ -4,6 +4,8 @@
 
 {% block body_class %}home-page{% endblock body_class %}
 
+{% block theme_color %}#000000{% endblock theme_color %}
+
 {% block content %}
 {% set base_slides = page.slideshow_images.split(',') if page.slideshow_images else [] %}
 {% set pane_ids = ['pane-intro', 'pane-story', 'pane-families', 'pane-schedule-1', 'pane-schedule-2', 'pane-links'] %}

@@ -87,7 +87,11 @@ h3 {
 
 .home-page {
   overflow: hidden;
-  background: #efe6dc;
+  background: #000000;
+}
+
+.home-page.chrome-light {
+  background: #ffffff;
 }
 
 .home-page .bg-orb {

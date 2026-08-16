@@ -2,7 +2,8 @@
 <html lang="{{ DEFAULT_LANG }}">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="{% block theme_color %}#fdf7f2{% endblock theme_color %}" />
   <title>{% block title %}{{ SITENAME }}{% endblock title %}</title>
   <link rel="icon" type="image/png" href="{{ SITEURL }}/images/logo/monogram.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
