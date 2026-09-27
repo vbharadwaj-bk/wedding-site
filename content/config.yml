@@ -110,3 +110,21 @@ wedding_schedule:
           venue: The Raajkutir
           address: 89C Narkeldanga Main Road, Kolkata, WB
           venue_map_url: https://www.google.com/maps/search/?api=1&query=Raajkutir+Kolkata+IHCL+SeleQtions+89C+Narkeldanga+Main+Road+Kolkata+WB+700054
+
+# Page: Reception e-invitation
+reception:
+  page_title: "Reception"
+  logo_alt: "Aditi & Vivek"
+  invite_lines:
+    - "together with their families"
+    - "cordially invite you to their wedding reception"
+  date: 2027-03-27
+  start_time: "6:00 pm"
+  end_time: "11:00 pm"
+  venue: "Oasis Palace"
+  venue_address: "35145 Newark Blvd, Newark, CA"
+  venue_map_url: "https://www.google.com/maps/search/?api=1&query=Oasis+Palace+35145+Newark+Blvd+Newark+CA"
+  rsvp_label: "RSVP"
+  rsvp_url: "#"
+  details_box_opacity: 0.8
+  details_box_blur_px: 0

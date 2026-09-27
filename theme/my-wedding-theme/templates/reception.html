@@ -4,8 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#ffffff" />
-  <title>Reception · {{ SITENAME }}</title>
+  <title>{{ RECEPTION.page_title }} · {{ SITENAME }}</title>
   <link rel="icon" type="image/png" href="{{ SITEURL }}/images/logo/monogram.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ SITEURL }}/theme/css/reception.css" />
 </head>
 <body class="reception-page">
@@ -13,6 +16,34 @@
     <figure class="rc-flower" data-rc-flower aria-hidden="true">
       <img src="{{ SITEURL }}/images/flowers/flowerA.jpg" data-slide-path="images/flowers/flowerA.jpg" alt="" decoding="async" fetchpriority="high" />
     </figure>
+
+    <section class="rc-content">
+      <h1 class="rc-logo">
+        <img src="{{ SITEURL }}/images/logo/aditi-vivek-logo-stacked.svg" alt="{{ RECEPTION.logo_alt }}" width="878" height="383" />
+      </h1>
+
+      <p class="rc-invite">
+        {% for line in RECEPTION.invite_lines %}
+        <span class="rc-invite-line">{{ line }}</span>
+        {% endfor %}
+      </p>
+
+      <a class="rc-rsvp" href="{{ RECEPTION.rsvp_url }}">{{ RECEPTION.rsvp_label }}</a>
+
+      <span class="rc-glyph" style="-webkit-mask-image: url('{{ SITEURL }}/images/glyphs/flower-2.png'); mask-image: url('{{ SITEURL }}/images/glyphs/flower-2.png');" aria-hidden="true"></span>
+
+      <div class="rc-details" style="--rc-box-opacity: {{ RECEPTION.details_box_opacity }}; --rc-box-blur: {{ RECEPTION.details_box_blur_px }}px;">
+        {% set day = RECEPTION.date %}
+        <p class="rc-when">
+          <time class="rc-nowrap" datetime="{{ day.isoformat() }}">{{ day.strftime('%A, %B') }} {{ day.day }}, {{ day.year }},</time>
+          <span class="rc-nowrap">{{ RECEPTION.start_time }} &ndash; {{ RECEPTION.end_time }}</span>
+        </p>
+        <p class="rc-venue">
+          <a href="{{ RECEPTION.venue_map_url }}" target="_blank" rel="noopener noreferrer">{{ RECEPTION.venue }}</a>
+        </p>
+        <p class="rc-address">{{ RECEPTION.venue_address }}</p>
+      </div>
+    </section>
   </main>
 
   <script src="{{ SITEURL }}/images/flowers/crops-data.js"></script>
