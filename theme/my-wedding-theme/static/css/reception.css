@@ -1,0 +1,82 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --rc-paper: #ffffff;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--rc-paper);
+}
+
+.rc {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100lvh;
+  overflow: hidden;
+}
+
+.rc-flower {
+  --flower-h: 140lvh;
+  --flower-w: calc(var(--flower-h) * 0.95);
+  --flower-reach: 50vw;
+
+  position: absolute;
+  top: calc(50lvh - var(--flower-h) * 0.43);
+  left: calc(var(--flower-reach) - var(--flower-w) / 2 - var(--flower-h) * 0.366);
+  width: var(--flower-w);
+  height: var(--flower-h);
+  margin: 0;
+  overflow: hidden;
+  pointer-events: none;
+
+  -webkit-mask-image: radial-gradient(ellipse 60% 74% at 40% 50%, #000 48%, transparent 100%);
+  mask-image: radial-gradient(ellipse 60% 74% at 40% 50%, #000 48%, transparent 100%);
+
+  opacity: 0;
+  transform: translateX(-2%);
+  transition: opacity 1.4s ease, transform 1.8s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.rc-flower img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(1.03);
+}
+
+.rc-flower.is-ready {
+  opacity: 1;
+  transform: none;
+}
+
+@media (max-width: 700px), (max-aspect-ratio: 4/5) {
+  .rc-flower {
+    --flower-w: 150vw;
+    --flower-h: 66svh;
+
+    top: auto;
+    left: 50%;
+    bottom: calc(var(--flower-h) * -0.2);
+    margin-left: calc(var(--flower-w) * -0.5);
+
+    -webkit-mask-image: radial-gradient(ellipse closest-side at 50% 58%, #000 62%, transparent 100%);
+    mask-image: radial-gradient(ellipse closest-side at 50% 58%, #000 62%, transparent 100%);
+
+    transform: translateY(6%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-flower {
+    transform: none;
+    transition: opacity 0.6s ease;
+  }
+}

@@ -1,0 +1,16 @@
+images:
+  'flowerA.jpg':
+    - aspectRatio: 1.306
+      x: 2143.5
+      y: 1641.5
+      scale: 4287
+  'flowerB.jpg':
+    - aspectRatio: 1.123
+      x: 2152
+      y: 1916
+      scale: 4304
+  'flowerC.jpg':
+    - aspectRatio: 1.498
+      x: 3008
+      y: 2008
+      scale: 6016
