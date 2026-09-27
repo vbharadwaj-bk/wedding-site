@@ -24,7 +24,7 @@ body {
 }
 
 .rc-flower {
-  --flower-h: 140lvh;
+  --flower-h: min(140lvh, 105vw);
   --flower-w: calc(var(--flower-h) * 0.95);
   --flower-reach: 50vw;
 
