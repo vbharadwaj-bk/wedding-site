@@ -118,6 +118,7 @@ reception:
   invite_lines:
     - "together with their families"
     - "cordially invite you to their wedding reception"
+  dress_code: "Dress: Indian / Western Cocktail or Semiformal"
   date: 2027-03-27
   start_time: "6:00 pm"
   end_time: "11:00 pm"

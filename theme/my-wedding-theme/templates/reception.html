@@ -34,6 +34,7 @@
 
       <div class="rc-details" style="--rc-box-opacity: {{ RECEPTION.details_box_opacity }}; --rc-box-blur: {{ RECEPTION.details_box_blur_px }}px;">
         {% set day = RECEPTION.date %}
+        <p class="rc-dress">{{ RECEPTION.dress_code }}</p>
         <p class="rc-when">
           <time class="rc-nowrap" datetime="{{ day.isoformat() }}">{{ day.strftime('%A, %B') }} {{ day.day }}, {{ day.year }},</time>
           <span class="rc-nowrap">{{ RECEPTION.start_time }} &ndash; {{ RECEPTION.end_time }}</span>

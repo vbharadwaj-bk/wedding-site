@@ -136,6 +136,12 @@ body {
   white-space: nowrap;
 }
 
+.rc-details .rc-dress {
+  margin-bottom: 0.5em;
+  font-size: 0.9em;
+  font-style: italic;
+}
+
 .rc-details .rc-venue {
   margin-top: 0.35em;
 }
@@ -208,10 +214,14 @@ body {
   }
 
   .rc-details {
-    padding: 0.9em 1.4em;
+    padding: 0.9em 1em;
     background: rgb(255 255 255 / var(--rc-box-opacity));
     -webkit-backdrop-filter: blur(var(--rc-box-blur));
     backdrop-filter: blur(var(--rc-box-blur));
+  }
+
+  .rc-details .rc-dress {
+    font-size: 0.82em;
   }
 
   .rc-glyph {
