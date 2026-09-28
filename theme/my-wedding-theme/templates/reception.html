@@ -28,13 +28,10 @@
         {% endfor %}
       </p>
 
-      <a class="rc-rsvp" href="{{ RECEPTION.rsvp_url }}">{{ RECEPTION.rsvp_label }}</a>
-
       <span class="rc-glyph" style="-webkit-mask-image: url('{{ SITEURL }}/images/glyphs/flower-2.png'); mask-image: url('{{ SITEURL }}/images/glyphs/flower-2.png');" aria-hidden="true"></span>
 
       <div class="rc-details" style="--rc-box-opacity: {{ RECEPTION.details_box_opacity }}; --rc-box-blur: {{ RECEPTION.details_box_blur_px }}px;">
         {% set day = RECEPTION.date %}
-        <p class="rc-dress">{{ RECEPTION.dress_code }}</p>
         <p class="rc-when">
           <time class="rc-nowrap" datetime="{{ day.isoformat() }}">{{ day.strftime('%A, %B') }} {{ day.day }}, {{ day.year }},</time>
           <span class="rc-nowrap">{{ RECEPTION.start_time }} &ndash; {{ RECEPTION.end_time }}</span>
@@ -43,6 +40,8 @@
           <a href="{{ RECEPTION.venue_map_url }}" target="_blank" rel="noopener noreferrer">{{ RECEPTION.venue }}</a>
         </p>
         <p class="rc-address">{{ RECEPTION.venue_address }}</p>
+        <p class="rc-dress">{{ RECEPTION.dress_code }}</p>
+        <a class="rc-rsvp" href="{{ SITEURL }}/rsvp/">{{ RECEPTION.rsvp_label }}</a>
       </div>
     </section>
   </main>

@@ -84,6 +84,7 @@ SLIDESHOW_CROPS = CONTENT_CONFIG.get("slideshow_crops", {}) if isinstance(CONTEN
 WEDDING_SCHEDULE = CONTENT_CONFIG.get("wedding_schedule", {}) if isinstance(CONTENT_CONFIG.get("wedding_schedule", {}), dict) else {}
 PANE_SLIDES = CONTENT_CONFIG.get("pane_slides", {}) if isinstance(CONTENT_CONFIG.get("pane_slides", {}), dict) else {}
 RECEPTION = CONTENT_CONFIG.get("reception", {}) if isinstance(CONTENT_CONFIG.get("reception", {}), dict) else {}
+RSVP = CONTENT_CONFIG.get("rsvp", {}) if isinstance(CONTENT_CONFIG.get("rsvp", {}), dict) else {}
 AVAILABLE_PHOTOS = _load_available_photo_paths(Path(PATH))
 
 JINJA_GLOBALS = {
@@ -92,5 +93,6 @@ JINJA_GLOBALS = {
     "WEDDING_SCHEDULE": WEDDING_SCHEDULE,
     "PANE_SLIDES": PANE_SLIDES,
     "RECEPTION": RECEPTION,
+    "RSVP": RSVP,
     "AVAILABLE_PHOTOS": AVAILABLE_PHOTOS,
 }

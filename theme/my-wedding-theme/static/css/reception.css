@@ -137,7 +137,7 @@ body {
 }
 
 .rc-details .rc-dress {
-  margin-bottom: 0.5em;
+  margin-top: 0.6em;
   font-size: 0.9em;
   font-style: italic;
 }
@@ -167,16 +167,15 @@ body {
 }
 
 .rc-rsvp {
-  margin-top: clamp(16px, 2.6vh, 28px);
-  font-family: "Cormorant Garamond", serif;
-  font-size: clamp(0.95rem, 1.1vw, 1.1rem);
+  display: inline-block;
+  margin-top: 0.8em;
+  font-size: 0.72em;
   font-weight: 700;
   letter-spacing: 0.16em;
   color: var(--rc-ink);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.3em;
-  animation: rc-rise 1.6s 0.95s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
 
 .rc-rsvp:hover,
@@ -248,7 +247,6 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .rc-logo,
   .rc-invite,
-  .rc-rsvp,
   .rc-glyph,
   .rc-details {
     animation-name: rc-fade;

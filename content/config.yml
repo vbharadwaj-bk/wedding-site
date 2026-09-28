@@ -118,7 +118,7 @@ reception:
   invite_lines:
     - "together with their families"
     - "cordially invite you to their wedding reception"
-  dress_code: "Dress: Indian / Western Cocktail or Semiformal"
+  dress_code: "Dress: Indian / Western Semiformal or Cocktail"
   date: 2027-03-27
   start_time: "6:00 pm"
   end_time: "11:00 pm"
@@ -126,6 +126,9 @@ reception:
   venue_address: "35145 Newark Blvd, Newark, CA"
   venue_map_url: "https://www.google.com/maps/search/?api=1&query=Oasis+Palace+35145+Newark+Blvd+Newark+CA"
   rsvp_label: "RSVP"
-  rsvp_url: "#"
   details_box_opacity: 0.8
   details_box_blur_px: 0
+
+# Page: RSVP redirect (aditiandvivek.com/rsvp)
+rsvp:
+  redirect_url: "https://withjoy.com/vivek-and-aditi/rsvp"

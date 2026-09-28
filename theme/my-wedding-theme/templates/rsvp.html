@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="{{ DEFAULT_LANG }}">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <meta http-equiv="refresh" content="0; url={{ RSVP.redirect_url }}" />
+  <link rel="canonical" href="{{ RSVP.redirect_url }}" />
+  <title>RSVP · {{ SITENAME }}</title>
+  <script>window.location.replace({{ RSVP.redirect_url | tojson }});</script>
+</head>
+<body>
+  <p><a href="{{ RSVP.redirect_url }}">Continue to the RSVP page</a></p>
+</body>
+</html>
