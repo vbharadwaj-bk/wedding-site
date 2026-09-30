@@ -26,7 +26,7 @@ body {
 .rc-flower {
   --flower-h: min(140lvh, 105vw);
   --flower-w: calc(var(--flower-h) * 0.95);
-  --flower-reach: 50vw;
+  --flower-reach: 57.5vw;
 
   position: absolute;
   top: calc(50lvh - var(--flower-h) * 0.43);
