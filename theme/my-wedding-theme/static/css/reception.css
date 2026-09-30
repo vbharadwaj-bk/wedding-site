@@ -229,18 +229,21 @@ body {
   }
 
   .rc-flower {
-    --flower-w: 130vw;
-    --flower-h: 84svh;
+    --flower-h: 132svh;
+    --flower-w: var(--flower-h);
+    --flower-stem-x: 82vw;
 
-    top: auto;
-    left: 50%;
-    bottom: calc(var(--flower-h) * -0.24);
-    margin-left: calc(var(--flower-w) * -0.5);
+    top: 6svh;
+    left: calc(var(--flower-stem-x) - var(--flower-w) / 2);
 
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.55) 14%, #000 34%);
-    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.55) 14%, #000 34%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.5) 8%, #000 26%);
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.5) 8%, #000 26%);
 
-    transform: translateY(6%);
+    transform: translateY(4%);
+  }
+
+  .rc-flower.is-ready {
+    opacity: 0.85;
   }
 }
 
